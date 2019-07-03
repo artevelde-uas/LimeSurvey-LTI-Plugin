@@ -25,9 +25,11 @@
         static protected $name = 'LTIPlugin';
 
         public function init() {
-            $this->subscribe('afterSurveyComplete');
+//            $this->subscribe('afterSurveyComplete'); //if implementing post back of score re-introduce this
             $this->subscribe('beforeSurveySettings');
-            $this->subscribe('newSurveySettings');
+	    $this->subscribe('newSurveySettings');
+            $this->subscribe('newDirectRequest'); //for LTI call
+	    $this->subscribe('newUnsecureRequest','newDirectRequest'); //for LTI call
         }
 
 
@@ -69,6 +71,99 @@
 					'help' => 'Enable debugmode to see what data is transmitted' 
 			) 
 	);
+
+
+
+
+	/** Adapted from: https://github.com/SondagesPro/LS-extendRemoteControl/blob/master/extendRemoteControl.php
+	 */
+    public function newDirectRequest()
+    {
+	    $oEvent = $this->getEvent();
+        if ($oEvent->get('target') != $this->getName())
+            return;
+        $action = $oEvent->get('function');
+
+
+require_once(dirname(__FILE__) . '/include/ims-blti/blti.php');
+//Update these placeholders to reflect the key and secret you want to use (anything will do)
+$lti_auth = array('key' => 'putYourKeyHere', 'secret' => 'putYourSecretHere');
+//Build the LTI object with the credentials as we know them
+$context = new BLTI($lti_auth['secret'], false, false);
+
+
+//Check if the correct key is being sent
+if ($context->info['oauth_consumer_key'] == $lti_auth['key']){
+	//Make sure our LTI object's OAuth connection is valid
+	if ($context->valid ){
+//		echo 'Valid LTI Connection. Output passed data:';
+		//Print out the passed data
+//		echo '<pre>',print_r($context->info),'</pre>';
+		
+		/*
+		Your Exciting Code Here
+ 		 */
+
+		if (!empty($action)) { 
+			$iSurveyId = intval($action); 
+		} else {
+			$iSurveyId = 632955;
+		}
+
+            $surveyidExists = Survey::model()->findByPk($iSurveyId);
+		if (!isset($surveyidExists)) {
+			die("Survey $iSurveyId does not exist");
+	            }
+
+		                if (!tableExists("{{tokens_$iSurveyId}}")) {
+				
+					die("No participant table for survey $iSurveyId");
+				}
+		//store the return url somewhere
+		//set the ENDURL of the survey to this and set auto link
+		$url = $context->info['launch_presentation_return_url'];
+
+		//search for token based on attribute_3 and attribute_4 (custom_canvas_course_id and custom_canvas_user_id)
+		$token_query = array('attribute_3' => $context->info['custom_canvas_course_id'], 'attribute_4' => $context->info['custom_canvas_user_id']);
+		$token_count = Token::model($iSurveyId)->countByAttributes($token_query);
+
+		if ($token_count == 0) { //if no token, then create a new one and start survey
+			$token_add = array('attribute_1' => $url, 'attribute_2' => $context->info['context_title'], 'firstname' => $context->info['lis_person_name_given'], 'lastname' => $context->info['lis_person_name_family'], 'email' => $context->info['lis_person_contact_email_primary']);
+	                $token = Token::create($iSurveyId);
+	                $token->setAttributes(array_merge($token_query,$token_add));
+			$token->generateToken();
+			if ($token->save()) {
+				header("Location: https://ltisurvey.acspri.org.au/index.php/$iSurveyId/token/" . $token->token);	
+			} else {
+				die("error creating token");
+			}
+		} else { //else if a token continue where left off
+			$token = Token::model($iSurveyId)->findByAttributes($token_query);
+			//already completed.
+			if ($token->completed != 'N') {
+				//display already completed and return to CANVAS
+				print "<p>Already completed evaluation</p>";
+				print "<div><a href='$url'>Return to CANVAS</a></div>";
+			} else {
+				header("Location: https://ltisurvey.acspri.org.au/index.php/$iSurveyId/token/" . $token->token);	
+			}
+		}
+		
+
+		
+	}
+	//We already checked the key so it's likely the user is using the wrong secret to generate their OAuth object
+	else{ 
+		echo "Bad OAuth. Probably sent the wrong secret";
+	}
+}
+	//Wrong key
+else{
+	echo "Wrong key passed";
+}
+
+    }
+
 
   /**
     * Add setting on survey level: send hook only for certain surveys / url setting per survey / auth code per survey / send user token / send question response
@@ -203,7 +298,9 @@
         {
           $time_start = microtime(true);
           $oEvent     = $this->getEvent();
-          $sSurveyId = $oEvent->get('surveyId');
+	  $sSurveyId = $oEvent->get('surveyId');
+	  return; //jump out for now
+
           if($this->isHookDisabled($sSurveyId))
           {
               return;
