@@ -30,9 +30,13 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 1. Edit your course in OpenEdX "Studio"
 2. In your course, visit "Settings" then "Advanced Settings"
 3. Ensure "Advanced Module List" contains:
+```
     ["lti_consumer"]
+```
 4. Ensure "LTI Passports" contains:
+```
     ["limesurvey:KEY:SECRET"]
+```
    (Where KEY and SECRET are replaced with the key and secret generated in the configuration step above - this will also be able to be copied and pasted from the LTIPlugin settings in LimeSurvey)
 5. Save the Advanced Settings
 
@@ -44,7 +48,9 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 4. Click on "Edit"
 5. Enter a display name - this can be anything you choose
 6. The "LTI ID" should be:
+```
     limesurvey
+```
 7. The "LTI URL" is the URL that appears on the "Settings for plugin LTI Plugin" page for your survey
 8. Other settings can remain as default
 9. Click "Save" and you will now be able to access LimeSurvey from within
