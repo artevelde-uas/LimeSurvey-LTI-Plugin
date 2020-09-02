@@ -40,6 +40,8 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
    (Where KEY and SECRET are replaced with the key and secret generated in the configuration step above - this will also be able to be copied and pasted from the LTIPlugin settings in LimeSurvey)
 5. Save the Advanced Settings
 
+If you have recieved a "CSRF Token" error in LimeSurvey you may need to set "LTI Launch Target" to "New Window" in OpenEdX to overcome this.
+
 ### Usage (OpenEdX)
 
 1. Add a new "Unit"
