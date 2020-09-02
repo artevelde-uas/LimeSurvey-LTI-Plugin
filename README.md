@@ -10,7 +10,7 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 ## Requirements
 
-- LimeSurvey version 3.x
+- LimeSurvey version 3.x, 4.x
 - Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable (the plugin will use the first 4 attributes for LTI related data)
 
 ## Configuration (LimeSurvey)
