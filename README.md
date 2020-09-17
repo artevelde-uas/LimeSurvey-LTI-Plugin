@@ -10,7 +10,7 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 ## Requirements
 
-- LimeSurvey version 3.x, 4.x
+- LimeSurvey version 3.x, (4.x may need to disable CSRF validation to work)
 - Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable (the plugin will use the first 4 attributes for LTI related data)
 
 ## Configuration (LimeSurvey)
@@ -19,11 +19,13 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 2. Confirm the LTI attributes match the system you wish to use (examples are given for OpenEdX and Canvas, also you can use Debug mode if you want to discover these yourself for testing in your own system)
 3. Save the settings
 4. Activate the plugin
-5. Activate an existing or new survey
-6. Visit "Simple plugin settings" for the survey and choose "Settings for plugin LTIPlugin"
-7. A random key and password should be generated - save the settings then a URL to access should be displayed (otherwise a message will be displayed notifying of the requirements for the LTI plugin as above)
-8. Use the URL listed and the key and secret generated to set up your LMS to use LimeSUrvey as an LTI Provider (see below for examples)
-9. By default a course participant will be able to complete the survey only once, and will return to the previous point of completion when visiting the survey again if not completed. If you want them to be able to complete multiple times for the same unit - please set "Allow a user in a course to complete this survey more than once" to "Yes"
+5. Visit the "Global settings" section, tab called "Security" in your LimeSurvey installation under "Configuration"
+6. Ensure "IFrame embedding allowed:" is set to "Allow"
+7. Activate an existing or new survey
+8. Visit "Simple plugin settings" for the survey and choose "Settings for plugin LTIPlugin"
+9. A random key and password should be generated - save the settings then a URL to access should be displayed (otherwise a message will be displayed notifying of the requirements for the LTI plugin as above)
+10. Use the URL listed and the key and secret generated to set up your LMS to use LimeSUrvey as an LTI Provider (see below for examples)
+11. By default a course participant will be able to complete the survey only once, and will return to the previous point of completion when visiting the survey again if not completed. If you want them to be able to complete multiple times for the same unit - please set "Allow a user in a course to complete this survey more than once" to "Yes"
 
 ### Configuration (OpenEdX)
 
@@ -42,7 +44,9 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 If you have recieved a "CSRF Token" error in LimeSurvey you may need to set "LTI Launch Target" to "New Window" in OpenEdX to overcome this.
 
-If changing to "New Window" still doesn't stop the CSRF error - you may need to disable CSRF protection in LimeSurvey until another workaround is found. To do this, you need to:
+If changing to "New Window" still doesn't stop the CSRF error - you may need to disable CSRF protection in LimeSurvey 4.x until another workaround is found. To do this, you need to:
+
+SECURITY WARNING: This will make your LimeSurvey installation less secure
 
 1. Edit application/config/config.php in your LimeSurvey installation
 2. Add:
