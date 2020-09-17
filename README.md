@@ -42,6 +42,26 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 If you have recieved a "CSRF Token" error in LimeSurvey you may need to set "LTI Launch Target" to "New Window" in OpenEdX to overcome this.
 
+If changing to "New Window" still doesn't stop the CSRF error - you may need to disable CSRF protection in LimeSurvey until another workaround is found. To do this, you need to:
+
+1. Edit application/config/config.php in your LimeSurvey installation
+2. Add:
+```
+       'request' => array(
+            'enableCsrfValidation'=>false, // CSRF protection
+        ),
+```
+After:
+```
+        'urlManager' => array(
+            'urlFormat' =>'path',
+            'rules' => array(
+                // You can add your own rules here
+            ),
+            'showScriptName' => true,
+        ),
+```
+
 ### Usage (OpenEdX)
 
 1. Add a new "Unit"
