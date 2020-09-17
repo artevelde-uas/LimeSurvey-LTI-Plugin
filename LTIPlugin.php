@@ -156,7 +156,7 @@ class LTIPlugin extends PluginBase {
                         $token->setAttributes(array_merge($token_query,$token_add));
                         $token->generateToken();
                         if ($token->save()) {
-                            header("Location: https://ltisurvey.acspri.org.au/index.php/$iSurveyId/token/" . $token->token);
+                            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
                         } else {
                             die("Error creating token");
                         }
@@ -167,7 +167,7 @@ class LTIPlugin extends PluginBase {
                             //display already completed and return to CANVAS
                             print "<p>Survey already completed</p>";
                         } else {
-                            header("Location: https://ltisurvey.acspri.org.au/index.php/$iSurveyId/token/" . $token->token);
+                            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
                         }
                     }
                 } else  {
