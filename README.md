@@ -10,7 +10,7 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 ## Requirements
 
-- LimeSurvey version 3.x, (4.x may need to disable CSRF validation to work)
+- LimeSurvey version 3.x, 4.x
 - Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable (the plugin will use the first 4 attributes for LTI related data)
 
 ## Configuration (LimeSurvey)
@@ -43,28 +43,6 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 5. Save the Advanced Settings
 
 If you have recieved a "CSRF Token" error in LimeSurvey you may need to set "LTI Launch Target" to "New Window" in OpenEdX to overcome this.
-
-If changing to "New Window" still doesn't stop the CSRF error - you may need to disable CSRF protection in LimeSurvey 4.x until another workaround is found. To do this, you need to:
-
-SECURITY WARNING: This will make your LimeSurvey installation less secure
-
-1. Edit application/config/config.php in your LimeSurvey installation
-2. Add:
-```
-       'request' => array(
-            'enableCsrfValidation'=>false, // CSRF protection
-        ),
-```
-After:
-```
-        'urlManager' => array(
-            'urlFormat' =>'path',
-            'rules' => array(
-                // You can add your own rules here
-            ),
-            'showScriptName' => true,
-        ),
-```
 
 ### Usage (OpenEdX)
 
