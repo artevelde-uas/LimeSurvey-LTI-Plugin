@@ -12,6 +12,7 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 
 - LimeSurvey version 3.x, (4.x may need to disable CSRF validation to work)
 - Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable (the plugin will use the first 4 attributes for LTI related data)
+- If your LTI Provider is running on HTTPS, then LimeSurvey must run over HTTPS also
 
 ## Configuration (LimeSurvey)
 
