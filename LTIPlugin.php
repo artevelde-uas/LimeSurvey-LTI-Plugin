@@ -217,7 +217,7 @@ class LTIPlugin extends PluginBase {
         $kmessage = $message;
 
         if ($message == "") {
-            $message =  Yii::app()->createAbsoluteUrl('plugins/direct', array('plugin' => "LTIPlugin", 'function' => $oEvent->get('survey'),));
+            $message =  Yii::app()->createAbsoluteUrl('plugins/unsecure', array('plugin' => "LTIPlugin", 'function' => $oEvent->get('survey'),));
             $kmessage = '"Advanced Module List" in "Advanced Settings" contains: ["lti_consumer"] and "LTI_Passports" contains: ["limesurvey:'.$apiKey.':'.$apiSecret.'"]';
         }
 
