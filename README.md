@@ -1,5 +1,5 @@
 # LTIPlugin
-LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider for tools such as Canvas and openEdX. LimeSurvey will have access to the LMS course name and course and student identifier and allow the completion of a survey.
+LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider for tools such as Moodle, Canvas and openEdX. LimeSurvey will have access to the LMS course name and course and student identifier and allow the completion of a survey.
 
 ## Installation
 
@@ -44,6 +44,16 @@ git clone https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 5. Save the Advanced Settings
 
 If you have recieved a "CSRF Token" error in LimeSurvey you may need to set "LTI Launch Target" to "New Window" in OpenEdX to overcome this.
+
+### Configuration and Usage (Moodle)
+
+1. Add a new "Activity or resource"
+2. Choose "External Tool"
+3. The "Tool URL" is the URL that appears on the "Settings for plugin LTI Plugin" page for your survey
+4. Click on "Show more" under "General"
+5. The "Consumer key" is the key that appears on the LTI plugin settings page
+6. The "Shared secret" is the secret that appears on the LTI plugin settings page
+
 
 ### Usage (OpenEdX)
 
