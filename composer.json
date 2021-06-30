@@ -1,0 +1,12 @@
+{
+    "name": "artevelde-uas/limesurvey-lti-plugin",
+    "description": "LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider",
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Renaat De Muynck",
+            "email": "renaat.demuynck@arteveldehs.be"
+        }
+    ],
+    "require": {}
+}
