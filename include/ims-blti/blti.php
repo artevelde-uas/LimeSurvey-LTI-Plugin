@@ -43,7 +43,7 @@ class TrivialOAuthDataStore extends OAuthDataStore {
     function lookup_nonce($consumer, $token, $nonce, $timestamp) {
         // Should add some clever logic to keep nonces from
         // being reused - for no we are really trusting
-	// that the timestamp will save us
+        // that the timestamp will save us
         return NULL;
     }
 
@@ -74,7 +74,7 @@ class BLTI {
         // If this request is not an LTI Launch, either
         // give up or try to retrieve the context from session
         if ( ! is_basic_lti_request() ) {
-            if ( $usesession === false ) return;  
+            if ( $usesession === false ) return;
             if ( strlen(session_id()) > 0 ) {
                 $row = $_SESSION['_basiclti_lti_row'];
                 if ( isset($row) ) $this->row = $row;
@@ -143,7 +143,7 @@ class BLTI {
         $method = new OAuthSignatureMethod_HMAC_SHA1();
         $server->add_signature_method($method);
         $request = OAuthRequest::from_request();
-        
+
         $this->basestring = $request->get_signature_base_string();
 
         try {
@@ -227,7 +227,7 @@ class BLTI {
             header("Location: $location");
     }
 
-    function dump() { 
+    function dump() {
         if ( ! $this->valid or $this->info == false ) return "Context not valid\n";
         $ret = "";
         $ret .= "getResourceKey() = ".$this->getResourceKey()."\n";
