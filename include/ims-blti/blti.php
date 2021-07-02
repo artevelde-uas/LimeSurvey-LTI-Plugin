@@ -44,23 +44,23 @@ class BLTI {
         $server->add_signature_method($method);
         $request = OAuthRequest::from_request();
 
-            $server->verify_request($request);
+        $server->verify_request($request);
 
         // Store the launch information in the session for later
-        $newinfo = array();
+        $info = array();
         foreach($_POST as $key => $value ) {
             if ( $key == "basiclti_submit" ) continue;
             if ( strpos($key, "oauth_") === false ) {
-                $newinfo[$key] = $value;
+                $info[$key] = $value;
                 continue;
             }
             if ( $key == "oauth_consumer_key" ) {
-                $newinfo[$key] = $value;
+                $info[$key] = $value;
                 continue;
             }
         }
 
-        $this->info = $newinfo;
+        $this->info = $info;
     }
 
 }
