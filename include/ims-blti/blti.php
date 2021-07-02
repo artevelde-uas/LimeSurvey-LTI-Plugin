@@ -28,29 +28,10 @@ class BLTI {
     public $row = false;
     public $context_id = false;  // Override context_id
 
-    function __construct($parm=false, $usesession=true, $doredirect=true) {
+    function __construct($parm=false, $doredirect=true) {
 
-        // If this request is not an LTI Launch, either
-        // give up or try to retrieve the context from session
-        if ( ! is_basic_lti_request() ) {
-            if ( $usesession === false ) return;
-            if ( strlen(session_id()) > 0 ) {
-                $row = $_SESSION['_basiclti_lti_row'];
-                if ( isset($row) ) $this->row = $row;
-                $context_id = $_SESSION['_basiclti_lti_context_id'];
-                if ( isset($context_id) ) $this->context_id = $context_id;
-                $info = $_SESSION['_basic_lti_context'];
-                if ( isset($info) ) {
-                    $this->info = $info;
-                    $this->valid = true;
-                    return;
-                }
-                $this->message = "Could not find context in session";
-                return;
-            }
-            $this->message = "Session not available";
-            return;
-        }
+        // If this request is not an LTI Launch, give up
+        if ( ! is_basic_lti_request() ) return;
 
         // Insure we have a valid launch
         if ( empty($_REQUEST["oauth_consumer_key"]) ) {
@@ -128,13 +109,6 @@ class BLTI {
         }
 
         $this->info = $newinfo;
-        if ( $usesession == true and strlen(session_id()) > 0 ) {
-             $_SESSION['_basic_lti_context'] = $this->info;
-             unset($_SESSION['_basiclti_lti_row']);
-             unset($_SESSION['_basiclti_lti_context_id']);
-             if ( $this->row ) $_SESSION['_basiclti_lti_row'] = $this->row;
-             if ( $this->context_id ) $_SESSION['_basiclti_lti_context_id'] = $this->context_id;
-        }
 
         if ( $this->valid && $doredirect ) {
             $this->redirect();
