@@ -113,7 +113,7 @@ class LTIPlugin extends PluginBase {
             try {
                 $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
             } catch (Exception $e) {
-                echo "Bad OAuth. Probably sent the wrong secret";
+                echo "Bad OAuth. " . $e->getMessage();
                 exit;
             }
 
