@@ -20,9 +20,7 @@ function is_basic_lti_request() {
 // functions
 class BLTI {
 
-    public $valid = false;
     public $complete = false;
-    public $message = false;
     public $basestring = false;
     public $info = false;
     public $row = false;
@@ -35,9 +33,9 @@ class BLTI {
 
         // Insure we have a valid launch
         if ( empty($_REQUEST["oauth_consumer_key"]) ) {
-            $this->message = "Missing oauth_consumer_key in request";
-            return;
+            throw new Exception("Missing oauth_consumer_key in request");
         }
+
         $oauth_consumer_key = $_REQUEST["oauth_consumer_key"];
 
         // Verify the message signature
@@ -52,13 +50,7 @@ class BLTI {
 
         $this->basestring = $request->get_signature_base_string();
 
-        try {
             $server->verify_request($request);
-            $this->valid = true;
-        } catch (Exception $e) {
-            $this->message = $e->getMessage();
-            return;
-        }
 
         // Store the launch information in the session for later
         $newinfo = array();

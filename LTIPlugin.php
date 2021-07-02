@@ -110,70 +110,69 @@ class LTIPlugin extends PluginBase {
             }
 
             //Build the LTI object with the credentials as we know them
-            $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
+            try {
+                $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
+            } catch (Exception $e) {
+                echo "Bad OAuth. Probably sent the wrong secret";
+            }
 
             //Check if the correct key is being sent
             if ($context->info['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
-                //Make sure our LTI object's OAuth connection is valid
-                if ($context->valid ){
-                    $this->debug("Valid LTI Connection",$context->info,microtime(true));
+                $this->debug("Valid LTI Connection",$context->info,microtime(true));
 
-                    if (!tableExists("{{tokens_$iSurveyId}}")) {
-                        die("No participant table for survey $iSurveyId");
+                if (!tableExists("{{tokens_$iSurveyId}}")) {
+                    die("No participant table for survey $iSurveyId");
+                }
+
+                //store the return url somewhere if it exists
+                $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
+                $url = "";
+                if (!empty($urlAttribute) && isset($context->info[$urlAttribute])) {
+                    $url = $context->info[$urlAttribute];
+                }
+
+                //If we want to limit completion to one per course/user combination:
+                $bMultipleCompletions = $this->get('bMultipleCompletions','Survey', $iSurveyId);
+
+                $token_count = 0;
+
+                $token_query = array('attribute_3' => $context->info[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
+                    'attribute_4' => $context->info[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]);
+
+                if ($bMultipleCompletions != 1) {
+                    //search for token based on attribute_3 and attribute_4 (resource id and user id)
+                    $token_count = Token::model($iSurveyId)->countByAttributes($token_query);
+
+                }
+
+                if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
+                    $firstname = isset($context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
+                    $lastname = isset($context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
+                    $email = isset($context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
+
+                    $attribute_2 = isset($context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
+                    $token_add = array('attribute_1' => $url,
+                        'attribute_2' => $attribute_2,
+                        'firstname' => $firstname,
+                        'lastname' => $lastname,
+                        'email' => $email);
+                    $token = Token::create($iSurveyId);
+                    $token->setAttributes(array_merge($token_query,$token_add));
+                    $token->generateToken();
+                    if ($token->save()) {
+                        Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
+                    } else {
+                        die("Error creating token");
                     }
-
-                    //store the return url somewhere if it exists
-                    $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
-                    $url = "";
-                    if (!empty($urlAttribute) && isset($context->info[$urlAttribute])) {
-                        $url = $context->info[$urlAttribute];
+                } else { //else if a token continue where left off
+                    $token = Token::model($iSurveyId)->findByAttributes($token_query);
+                    //already completed.
+                    if ($token->completed != 'N') {
+                        //display already completed and return to CANVAS
+                        print "<p>Survey already completed</p>";
+                    } else {
+                        Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
                     }
-
-                    //If we want to limit completion to one per course/user combination:
-                    $bMultipleCompletions = $this->get('bMultipleCompletions','Survey', $iSurveyId);
-
-                    $token_count = 0;
-
-                    $token_query = array('attribute_3' => $context->info[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
-                        'attribute_4' => $context->info[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]);
-
-                    if ($bMultipleCompletions != 1) {
-                        //search for token based on attribute_3 and attribute_4 (resource id and user id)
-                        $token_count = Token::model($iSurveyId)->countByAttributes($token_query);
-
-                    }
-
-                    if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
-                        $firstname = isset($context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
-                        $lastname = isset($context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
-                        $email = isset($context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
-
-                        $attribute_2 = isset($context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
-                        $token_add = array('attribute_1' => $url,
-                            'attribute_2' => $attribute_2,
-                            'firstname' => $firstname,
-                            'lastname' => $lastname,
-                            'email' => $email);
-                        $token = Token::create($iSurveyId);
-                        $token->setAttributes(array_merge($token_query,$token_add));
-                        $token->generateToken();
-                        if ($token->save()) {
-                            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
-                        } else {
-                            die("Error creating token");
-                        }
-                    } else { //else if a token continue where left off
-                        $token = Token::model($iSurveyId)->findByAttributes($token_query);
-                        //already completed.
-                        if ($token->completed != 'N') {
-                            //display already completed and return to CANVAS
-                            print "<p>Survey already completed</p>";
-                        } else {
-                            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
-                        }
-                    }
-                } else  {
-                    echo "Bad OAuth. Probably sent the wrong secret";
                 }
             } else {
                 echo "Wrong key passed";
