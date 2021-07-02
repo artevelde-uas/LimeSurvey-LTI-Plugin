@@ -9,11 +9,6 @@ Use TrivialOAuthDataStore;
 // Returns true if this is a Basic LTI message
 // with minimum values to meet the protocol
 function is_basic_lti_request() {
-   $good_message_type = $_REQUEST["lti_message_type"] == "basic-lti-launch-request";
-   $good_lti_version = $_REQUEST["lti_version"] == "LTI-1p0";
-   $resource_link_id = $_REQUEST["resource_link_id"];
-   if ($good_message_type and $good_lti_version and isset($resource_link_id) ) return(true);
-   return false;
 }
 
 // Basic LTI Class that does the setup and provides utility
@@ -25,7 +20,13 @@ class BLTI {
     function __construct($secret) {
 
         // If this request is not an LTI Launch, give up
-        if ( ! is_basic_lti_request() ) return;
+        if ( ( $_REQUEST["lti_message_type"] != "basic-lti-launch-request" ) || ( $_REQUEST["lti_version"] !== "LTI-1p0" ) ) {
+            throw new Exception("Not a valid LTI launch request");
+        }
+
+        if ( !isset($_REQUEST["resource_link_id"]) ) {
+            throw new Exception("No resource link id provided");
+        }
 
         // Insure we have a valid launch
         if ( empty($_REQUEST["oauth_consumer_key"]) ) {
