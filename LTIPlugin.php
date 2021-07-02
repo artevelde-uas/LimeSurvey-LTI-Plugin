@@ -1,4 +1,8 @@
 <?php
+
+require 'vendor/autoload.php';
+
+
 /**
  * Make LimeSurvey an LTI provider
  * Plugin based on "zesthook" by Evently-nl
@@ -104,8 +108,6 @@ class LTIPlugin extends PluginBase {
             if (!isset($surveyidExists)) {
                 die("Survey $iSurveyId does not exist");
             }
-
-            require_once(dirname(__FILE__) . '/include/ims-blti/blti.php');
 
             //Build the LTI object with the credentials as we know them
             $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId), false, false);

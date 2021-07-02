@@ -8,5 +8,11 @@
             "email": "renaat.demuynck@arteveldehs.be"
         }
     ],
-    "require": {}
+    "autoload": {
+        "files": [
+            "include/ims-blti/blti.php"
+        ]
+    },
+    "require": {
+    }
 }
