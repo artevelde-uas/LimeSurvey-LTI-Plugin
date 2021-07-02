@@ -1,6 +1,12 @@
 <?php
 
-require_once 'OAuth.php';
+use IMSGlobal\LTI\OAuth\OAuthDataStore;
+use IMSGlobal\LTI\OAuth\OAuthServer;
+use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
+use IMSGlobal\LTI\OAuth\OAuthRequest;
+use IMSGlobal\LTI\OAuth\OAuthConsumer;
+use IMSGlobal\LTI\OAuth\OAuthToken;
+
 
 // Returns true if this is a Basic LTI message
 // with minimum values to meet the protocol

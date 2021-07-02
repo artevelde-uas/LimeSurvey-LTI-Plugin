@@ -1,10 +1,13 @@
 <?php
 
-require_once 'OAuth.php';
+use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
+use IMSGlobal\LTI\OAuth\OAuthConsumer;
+use IMSGlobal\LTI\OAuth\OAuthRequest;
+
 
   // Replace this with some real function that pulls from the LMS.
   function getLMSDummyData() {
-    $parms = array( 
+    $parms = array(
       "resource_link_id" => "120988f929-274612",
       "resource_link_title" => "Weekly Blog",
       "resource_link_description" => "Each student needs to reflect on the weekly reading.  These should be one paragraph long.",
@@ -45,13 +48,13 @@ require_once 'OAuth.php';
     if ( ! $launch_url ) $launch_url = $xml->launch_url[0];
     if ( $launch_url ) $launch_url = (string) $launch_url;
     $custom = array();
-    if ( $xml->custom[0]->parameter ) 
+    if ( $xml->custom[0]->parameter )
     foreach ( $xml->custom[0]->parameter as $resource) {
       $key = (string) $resource['key'];
       $key = strtolower($key);
       $nk = "";
-      for($i=0; $i < strlen($key); $i++) { 
-        $ch = substr($key,$i,1); 
+      for($i=0; $i < strlen($key); $i++) {
+        $ch = substr($key,$i,1);
         if ( $ch >= "a" && $ch <= "z" ) $nk .= $ch;
         else if ( $ch >= "0" && $ch <= "9" ) $nk .= $ch;
         else $nk .= "_";
