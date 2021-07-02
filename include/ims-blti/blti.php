@@ -45,21 +45,10 @@ class BLTI {
 
         $server->verify_request($request);
 
-        // Store the launch information in the session for later
-        $info = array();
-        foreach($_POST as $key => $value ) {
-            if ( $key == "basiclti_submit" ) continue;
-            if ( strpos($key, "oauth_") === false ) {
-                $info[$key] = $value;
-                continue;
-            }
-            if ( $key == "oauth_consumer_key" ) {
-                $info[$key] = $value;
-                continue;
-            }
-        }
-
-        $this->info = $info;
+        // Strip OAuth papameters (except consumer key)
+        $this->info = array_filter($_POST, function ($value, $key) {
+            return ( ( strpos($key, "oauth_") === false ) || ( $key === "oauth_consumer_key" ) );
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
 }
