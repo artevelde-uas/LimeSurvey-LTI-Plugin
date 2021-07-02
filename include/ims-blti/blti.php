@@ -33,11 +33,9 @@ class BLTI {
             throw new Exception("Missing oauth_consumer_key in request");
         }
 
-        $oauth_consumer_key = $_REQUEST["oauth_consumer_key"];
-
         // Verify the message signature
         $store = new TrivialOAuthDataStore();
-        $store->add_consumer($oauth_consumer_key, $secret);
+        $store->add_consumer($_REQUEST["oauth_consumer_key"], $secret);
 
         $server = new OAuthServer($store);
 
