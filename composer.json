@@ -10,7 +10,8 @@
     ],
     "autoload": {
         "files": [
-            "include/ims-blti/blti.php"
+            "include/ims-blti/blti.php",
+            "include/ims-blti/TrivialOAuthDataStore.php"
         ]
     },
     "require": {
