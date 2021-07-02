@@ -5,7 +5,7 @@ require 'vendor/autoload.php';
 use IMSGlobal\LTI\OAuth\OAuthServer;
 use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
 use IMSGlobal\LTI\OAuth\OAuthRequest;
-Use TrivialOAuthDataStore;
+Use ArrayOAuthDataStore;
 
 
 /**
@@ -303,7 +303,7 @@ class LTIPlugin extends PluginBase {
         }
 
         // Verify the message signature
-        $store = new TrivialOAuthDataStore();
+        $store = new ArrayOAuthDataStore();
         $store->add_consumer($_REQUEST["oauth_consumer_key"], $secret);
 
         $server = new OAuthServer($store);

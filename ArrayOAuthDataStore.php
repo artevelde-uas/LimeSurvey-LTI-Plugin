@@ -8,7 +8,7 @@ use IMSGlobal\LTI\OAuth\OAuthToken;
 /**
  * A Trivial memory-based store - no support for tokens
  */
-class TrivialOAuthDataStore extends OAuthDataStore {
+class ArrayOAuthDataStore extends OAuthDataStore {
     private $consumers = array();
 
     function add_consumer($consumer_key, $consumer_secret) {
