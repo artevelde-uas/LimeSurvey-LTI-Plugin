@@ -77,58 +77,6 @@ class BLTI {
         $this->info = $newinfo;
     }
 
-    function addSession($location) {
-        if ( ini_get('session.use_cookies') == 0 ) {
-            if ( strpos($location,'?') > 0 ) {
-               $location = $location . '&';
-            } else {
-               $location = $location . '?';
-            }
-            $location = $location . session_name() . '=' . session_id();
-        }
-        return $location;
-    }
-
-    function isInstructor() {
-        $roles = $this->info['roles'];
-        $roles = strtolower($roles);
-        if ( ! ( strpos($roles,"instructor") === false ) ) return true;
-        if ( ! ( strpos($roles,"administrator") === false ) ) return true;
-        return false;
-    }
-
-
-    function getResourceKey() {
-        $oauth = $this->info['oauth_consumer_key'];
-        $id = $this->info['resource_link_id'];
-        if ( strlen($id) > 0 and strlen($oauth) > 0 ) return $oauth . ':' . $id;
-        return false;
-    }
-
-    function getResourceTitle() {
-        $title = $this->info['resource_link_title'];
-        if ( strlen($title) > 0 ) return $title;
-        return false;
-    }
-
-    // TODO: Add javasript version if headers are already sent
-    function redirect() {
-            $host = $_SERVER['HTTP_HOST'];
-            $uri = $_SERVER['PHP_SELF'];
-            $location = $_SERVER['HTTPS'] ? 'https://' : 'http://';
-            $location = $location . $host . $uri;
-            $location = $this->addSession($location);
-            header("Location: $location");
-    }
-
-    function dump() {
-        if ( ! $this->valid or $this->info == false ) return "Context not valid\n";
-        $ret = "";
-        $ret .= "getResourceKey() = ".$this->getResourceKey()."\n";
-        $ret .= "getResourceTitle() = ".$this->getResourceTitle()."\n";
-        return $ret;
-    }
-
 }
 
 ?>
