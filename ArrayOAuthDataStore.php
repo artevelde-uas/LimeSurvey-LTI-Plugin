@@ -10,7 +10,7 @@ use IMSGlobal\LTI\OAuth\OAuthToken;
  */
 class ArrayOAuthDataStore extends OAuthDataStore
 {
-    private $consumers = array();
+    private $consumers = [];
 
     function add_consumer($consumer_key, $consumer_secret)
     {
