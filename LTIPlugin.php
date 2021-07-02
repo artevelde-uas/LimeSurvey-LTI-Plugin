@@ -2,6 +2,11 @@
 
 require 'vendor/autoload.php';
 
+use IMSGlobal\LTI\OAuth\OAuthServer;
+use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
+use IMSGlobal\LTI\OAuth\OAuthRequest;
+Use TrivialOAuthDataStore;
+
 
 /**
  * Make LimeSurvey an LTI provider
@@ -111,13 +116,11 @@ class LTIPlugin extends PluginBase {
 
             //Build the LTI object with the credentials as we know them
             try {
-                $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
+                $params = $this->handleRequest($this->get('sAuthSecret','Survey', $iSurveyId));
             } catch (Exception $e) {
                 echo "Bad OAuth. " . $e->getMessage();
                 exit;
             }
-
-            $params = $context->info;
 
             //Check if the correct key is being sent
             if ($params['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
@@ -281,6 +284,40 @@ class LTIPlugin extends PluginBase {
             $default=$event->get($name,null,null,isset($this->settings[$name]['default'])?$this->settings[$name]['default']:NULL);
             $this->set($name, $value, 'Survey', $event->get('survey'),$default);
         }
+    }
+
+    private function handleRequest($secret)
+    {
+        // If this request is not an LTI Launch, give up
+        if ( ( $_REQUEST["lti_message_type"] != "basic-lti-launch-request" ) || ( $_REQUEST["lti_version"] !== "LTI-1p0" ) ) {
+            throw new Exception("Not a valid LTI launch request");
+        }
+
+        if ( !isset($_REQUEST["resource_link_id"]) ) {
+            throw new Exception("No resource link id provided");
+        }
+
+        // Insure we have a valid launch
+        if ( empty($_REQUEST["oauth_consumer_key"]) ) {
+            throw new Exception("Missing oauth_consumer_key in request");
+        }
+
+        // Verify the message signature
+        $store = new TrivialOAuthDataStore();
+        $store->add_consumer($_REQUEST["oauth_consumer_key"], $secret);
+
+        $server = new OAuthServer($store);
+
+        $method = new OAuthSignatureMethod_HMAC_SHA1();
+        $server->add_signature_method($method);
+
+        $request = OAuthRequest::from_request();
+        $server->verify_request($request);
+
+        // Strip OAuth papameters (except consumer key)
+        return array_filter($_POST, function ($value, $key) {
+            return ( ( strpos($key, "oauth_") === false ) || ( $key === "oauth_consumer_key" ) );
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
 
