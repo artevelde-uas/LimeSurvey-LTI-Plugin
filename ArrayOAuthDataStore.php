@@ -19,10 +19,6 @@ class ArrayOAuthDataStore extends OAuthDataStore
 
     function lookup_consumer($consumer_key)
     {
-        if (strpos($consumer_key, "http://") === 0) {
-            return new OAuthConsumer($consumer_key, "secret", null);
-        }
-
         if ($this->consumers[$consumer_key]) {
             return new OAuthConsumer($consumer_key, $this->consumers[$consumer_key], null);
         }
