@@ -20,11 +20,7 @@ function is_basic_lti_request() {
 // functions
 class BLTI {
 
-    public $complete = false;
-    public $basestring = false;
     public $info = false;
-    public $row = false;
-    public $context_id = false;  // Override context_id
 
     function __construct($secret) {
 
@@ -47,8 +43,6 @@ class BLTI {
         $method = new OAuthSignatureMethod_HMAC_SHA1();
         $server->add_signature_method($method);
         $request = OAuthRequest::from_request();
-
-        $this->basestring = $request->get_signature_base_string();
 
             $server->verify_request($request);
 
