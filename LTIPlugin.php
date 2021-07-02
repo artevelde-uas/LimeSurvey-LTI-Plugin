@@ -114,6 +114,7 @@ class LTIPlugin extends PluginBase {
                 $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
             } catch (Exception $e) {
                 echo "Bad OAuth. Probably sent the wrong secret";
+                exit;
             }
 
             //Check if the correct key is being sent
