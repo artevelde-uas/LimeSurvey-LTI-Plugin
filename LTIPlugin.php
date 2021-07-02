@@ -117,8 +117,10 @@ class LTIPlugin extends PluginBase {
                 exit;
             }
 
+            $params = $context->info;
+
             //Check if the correct key is being sent
-            if ($context->info['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
+            if ($params['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
                 $this->debug("Valid LTI Connection",$context->info,microtime(true));
 
                 if (!tableExists("{{tokens_$iSurveyId}}")) {
@@ -128,8 +130,8 @@ class LTIPlugin extends PluginBase {
                 //store the return url somewhere if it exists
                 $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
                 $url = "";
-                if (!empty($urlAttribute) && isset($context->info[$urlAttribute])) {
-                    $url = $context->info[$urlAttribute];
+                if (!empty($urlAttribute) && isset($params[$urlAttribute])) {
+                    $url = $params[$urlAttribute];
                 }
 
                 //If we want to limit completion to one per course/user combination:
@@ -137,8 +139,8 @@ class LTIPlugin extends PluginBase {
 
                 $token_count = 0;
 
-                $token_query = array('attribute_3' => $context->info[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
-                    'attribute_4' => $context->info[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]);
+                $token_query = array('attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
+                    'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]);
 
                 if ($bMultipleCompletions != 1) {
                     //search for token based on attribute_3 and attribute_4 (resource id and user id)
@@ -147,11 +149,11 @@ class LTIPlugin extends PluginBase {
                 }
 
                 if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
-                    $firstname = isset($context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$context->info[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
-                    $lastname = isset($context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$context->info[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
-                    $email = isset($context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$context->info[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
+                    $firstname = isset($params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
+                    $lastname = isset($params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
+                    $email = isset($params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
 
-                    $attribute_2 = isset($context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$context->info[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
+                    $attribute_2 = isset($params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
                     $token_add = array('attribute_1' => $url,
                         'attribute_2' => $attribute_2,
                         'firstname' => $firstname,
