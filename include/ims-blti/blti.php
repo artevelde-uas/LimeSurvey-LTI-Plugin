@@ -28,7 +28,7 @@ class BLTI {
     public $row = false;
     public $context_id = false;  // Override context_id
 
-    function __construct($parm=false, $doredirect=true) {
+    function __construct($parm=false) {
 
         // If this request is not an LTI Launch, give up
         if ( ! is_basic_lti_request() ) return;
@@ -109,11 +109,6 @@ class BLTI {
         }
 
         $this->info = $newinfo;
-
-        if ( $this->valid && $doredirect ) {
-            $this->redirect();
-            $this->complete = true;
-        }
     }
 
     function addSession($location) {

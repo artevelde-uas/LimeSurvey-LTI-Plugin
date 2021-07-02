@@ -110,7 +110,7 @@ class LTIPlugin extends PluginBase {
             }
 
             //Build the LTI object with the credentials as we know them
-            $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId), false);
+            $context = new BLTI($this->get('sAuthSecret','Survey', $iSurveyId));
 
             //Check if the correct key is being sent
             if ($context->info['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
