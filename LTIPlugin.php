@@ -128,7 +128,7 @@ class LTIPlugin extends PluginBase {
             exit('Wrong key passed');
         }
 
-        $this->debug('Valid LTI Connection',$context->info,microtime(true));
+        $this->debug('Valid LTI Connection',$params,microtime(true));
 
         if (!tableExists("{{tokens_$surveyId}}")) {
             exit("No participant table for survey $surveyId");
