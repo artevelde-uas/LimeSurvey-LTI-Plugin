@@ -30,8 +30,8 @@ class LTIPlugin extends PluginBase
 {
 
     protected $storage = 'DbStorage';
-    static protected $description = 'Make LimeSurvey an LTI provider';
-    static protected $name = 'LTIPlugin';
+    static protected $name = 'LTI Plugin';
+    static protected $description = 'LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider';
 
     public function init()
     {
