@@ -10,6 +10,8 @@ use ArrayOAuthDataStore;
  * Make LimeSurvey an LTI provider
  * Plugin based on "zesthook" by Evently-nl
  *
+ * @author Renaat De Muynck <renaat.demuynck@arteveldehs.be>
+ * @copyright 2021 Artevelde UAS <https://www.artevelde-uas.be>
  * @author Adam Zammit <adam@acspri.org.au>
  * @copyright 2018,2020 ACSPRI <https://www.acspri.org.au>
  * @author Stefan Verweij <stefan@evently.nl>

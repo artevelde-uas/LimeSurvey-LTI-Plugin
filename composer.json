@@ -4,7 +4,16 @@
     "license": "GPL-3.0",
     "authors": [{
         "name": "Renaat De Muynck",
-        "email": "renaat.demuynck@arteveldehs.be"
+        "email": "renaat.demuynck@arteveldehs.be",
+        "homepage": "https://www.artevelde-uas.be"
+    }, {
+        "name": "Adam Zammit",
+        "email": "adam@acspri.org.au",
+        "homepage": "https://www.acspri.org.au"
+    }, {
+        "name": "Stefan Verweij",
+        "email": "stefan@evently.nl",
+        "homepage": "https://www.evently.nl"
     }],
     "autoload": {
         "files": [
