@@ -28,7 +28,6 @@ use ArrayOAuthDataStore;
  */
 class LTIPlugin extends PluginBase
 {
-
     protected $storage = 'DbStorage';
     static protected $name = 'LTI Plugin';
     static protected $description = 'LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider';
@@ -96,9 +95,6 @@ class LTIPlugin extends PluginBase
         ]
     ];
 
-
-    /** Adapted from: https://github.com/SondagesPro/LS-extendRemoteControl/blob/master/extendRemoteControl.php
-     */
     public function newDirectRequest()
     {
         $event = $this->getEvent();
@@ -119,14 +115,13 @@ class LTIPlugin extends PluginBase
             exit("Survey $surveyId does not exist");
         }
 
-        //Build the LTI object with the credentials as we know them
         try {
             $params = $this->handleRequest($this->get('sAuthSecret', 'Survey', $surveyId));
         } catch (Exception $e) {
             exit("Bad OAuth: {$e->getMessage()}");
         }
 
-        //Check if the correct key is being sent
+        // Check if the correct key is being sent
         if ($params['oauth_consumer_key'] != $this->get('sAuthKey', 'Survey', $surveyId)) {
             exit('Wrong key passed');
         }
@@ -137,22 +132,24 @@ class LTIPlugin extends PluginBase
             exit("No participant table for survey $surveyId");
         }
 
-        //store the return url somewhere if it exists
+        // Store the return url somewhere if it exists
         $urlAttribute = $this->get('sUrlAttribute', null, null, $this->settings['sUrlAttribute']);
         $url = (!empty($urlAttribute) && isset($params[$urlAttribute])) ? $params[$urlAttribute] : '';
 
-        //If we want to limit completion to one per course/user combination:
+        // If we want to limit completion to one per course/user combination:
         $multipleCompletions = (bool) $this->get('bMultipleCompletions', 'Survey', $surveyId);
 
-        //search for token based on attribute_3 and attribute_4 (resource id and user id)
+        // Search for token based on attribute_3 and attribute_4 (resource id and user id)
         $tokenQuery = [
             'attribute_3' => $params[$this->get('sResourceIdAttribute', null, null, $this->settings['sResourceIdAttribute'])],
             'attribute_4' => $params[$this->get('sUserIdAttribute', null, null, $this->settings['sUserIdAttribute'])]
         ];
 
+        // Get the current token count
         $tokenCount = $multipleCompletions ? 0 : (int) Token::model($surveyId)->countByAttributes($tokenQuery);
 
-        if ($multipleCompletions || $tokenCount === 0) { //if no token, then create a new one and start survey
+        // If no token, then create a new one and start survey
+        if ($multipleCompletions || $tokenCount === 0) {
             $firstname = $params[$this->get('sFirstNameAttribute', null, null, $this->settings['sFirstNameAttribute'])] ?? '';
             $lastname = $params[$this->get('sLastNameAttribute', null, null, $this->settings['sLastNameAttribute'])] ?? '';
             $email = $params[$this->get('sEmailAttribute', null, null, $this->settings['sEmailAttribute'])] ?? '';
@@ -172,27 +169,32 @@ class LTIPlugin extends PluginBase
                 exit('Error creating token');
             }
 
+            // Create the survey URL
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
                 'sid' => $surveyId,
                 'token' => $token->token,
                 'newtest' => 'Y'
             ]);
-        } else { //else if a token continue where left off
+        }
+        // Else if a token continue where left off
+        else {
             $token = Token::model($surveyId)->findByAttributes($tokenQuery);
-            //already completed.
+
+            // Already completed.
             if ($token->completed != 'N') {
                 exit('Survey already completed');
             }
 
+            // Create the survey URL
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
                 'sid' => $surveyId,
                 'token' => $token->token
             ]);
         }
 
+        // Redirect to the survey
         Yii::app()->getController()->redirect($redirectUrl);
     }
-
 
     /**
      * Add setting on survey level: provide URL for LTI connector and check that tokens table / attributes exist
