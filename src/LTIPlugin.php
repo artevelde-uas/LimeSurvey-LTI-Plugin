@@ -99,7 +99,7 @@ class LTIPlugin extends PluginBase
     {
         $event = $this->getEvent();
 
-        if ($event->get('target') != $this->getName()) {
+        if ($event->get('target') !== $this->getName()) {
             return;
         }
 
@@ -122,7 +122,7 @@ class LTIPlugin extends PluginBase
         }
 
         // Check if the correct key is being sent
-        if ($params['oauth_consumer_key'] != $this->get('sAuthKey', 'Survey', $surveyId)) {
+        if ($params['oauth_consumer_key'] !== $this->get('sAuthKey', 'Survey', $surveyId)) {
             exit('Wrong key passed');
         }
 
@@ -181,7 +181,7 @@ class LTIPlugin extends PluginBase
             $token = Token::model($surveyId)->findByAttributes($tokenQuery);
 
             // Already completed.
-            if ($token->completed != 'N') {
+            if ($token->completed !== 'N') {
                 exit('Survey already completed');
             }
 
@@ -219,18 +219,18 @@ class LTIPlugin extends PluginBase
         }
 
         $apiKey = $this->get('sAuthKey', 'Survey', $event->get('survey'));
-        if (empty($apiKey) || trim($apiKey) == '') {
+        if (empty($apiKey) || trim($apiKey) === '') {
             $info = 'Set an Auth key and save these settings before you can access the LTI URL';
         }
 
         $apiSecret = $this->get('sAuthSecret', 'Survey', $event->get('survey'));
-        if (empty($apiKey) || trim($apiSecret) == '') {
+        if (empty($apiKey) || trim($apiSecret) === '') {
             $info = 'Set an Auth secret and save these settings before you can access the LTI URL';
         }
 
         $info2 = $info;
 
-        if ($info == '') {
+        if ($info === '') {
             $info =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
                 'plugin' => 'LTIPlugin',
                 'function' => $event->get('survey')
@@ -298,7 +298,7 @@ class LTIPlugin extends PluginBase
     private function handleRequest($secret)
     {
         // If this request is not an LTI Launch, give up
-        if (($_REQUEST['lti_message_type'] != 'basic-lti-launch-request') || ($_REQUEST['lti_version'] !== 'LTI-1p0')) {
+        if (($_REQUEST['lti_message_type'] !== 'basic-lti-launch-request') || ($_REQUEST['lti_version'] !== 'LTI-1p0')) {
             throw new Exception('Not a valid LTI launch request');
         }
 
