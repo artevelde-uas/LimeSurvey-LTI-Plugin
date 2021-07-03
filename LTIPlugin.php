@@ -235,18 +235,21 @@ class LTIPlugin extends PluginBase
             $info2 = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
         }
 
+        $defaultAuthKey = $this->get('sAuthKey', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)));
+        $defaultAuthSecret = $this->get('sAuthSecret', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)));
+
         $sets = [
             'sAuthKey' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The key used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthKey', 'Survey', $event->get('survey'), $this->get('sAuthKey', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthKey', 'Survey', $event->get('survey'), $defaultAuthKey),
             ],
             'sAuthSecret' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The secret used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthSecret', 'Survey', $event->get('survey'), $this->get('sAuthSecret', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthSecret', 'Survey', $event->get('survey'), $defaultAuthSecret),
             ],
             'bMultipleCompletions' => [
                 'type' => 'select',
