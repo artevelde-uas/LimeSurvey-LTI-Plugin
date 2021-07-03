@@ -235,8 +235,8 @@ class LTIPlugin extends PluginBase
             $info2 = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
         }
 
-        $defaultAuthKey = $this->get('sAuthKey', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)));
-        $defaultAuthSecret = $this->get('sAuthSecret', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)));
+        $defaultAuthKey = $this->get('sAuthKey', null, null, $this->generateRandomString());
+        $defaultAuthSecret = $this->get('sAuthSecret', null, null, $this->generateRandomString());
 
         $sets = [
             'sAuthKey' => [
@@ -327,6 +327,12 @@ class LTIPlugin extends PluginBase
         }, ARRAY_FILTER_USE_BOTH);
     }
 
+    private function generateRandomString()
+    {
+        $randomString = Yii::app()->securityManager->generateRandomString(32);
+
+        return str_replace(['~', '_', ':'], ['a', 'z', 'e'], $randomString);
+    }
 
     private function debug($parameters, $hookSent, $timeStart)
     {
