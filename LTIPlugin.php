@@ -107,34 +107,31 @@ class LTIPlugin extends PluginBase {
         $action = $event->get('function');
 
         if (empty($action)) {
-            echo 'No survey id passed';
-            return;
+            exit('No survey id passed');
         }
 
         $surveyId = (int) $action;
 
         if (Survey::model()->findByPk($surveyId) === null) {
-            die("Survey $surveyId does not exist");
+            exit("Survey $surveyId does not exist");
         }
 
         //Build the LTI object with the credentials as we know them
         try {
             $params = $this->handleRequest($this->get('sAuthSecret','Survey', $surveyId));
         } catch (Exception $e) {
-            echo 'Bad OAuth. ' . $e->getMessage();
-            exit;
+            exit("Bad OAuth: {$e->getMessage()}");
         }
 
         //Check if the correct key is being sent
         if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $surveyId)){
-            echo 'Wrong key passed';
-            exit;
+            exit('Wrong key passed');
         }
 
         $this->debug('Valid LTI Connection',$context->info,microtime(true));
 
         if (!tableExists("{{tokens_$surveyId}}")) {
-            die("No participant table for survey $surveyId");
+            exit("No participant table for survey $surveyId");
         }
 
         //store the return url somewhere if it exists
@@ -172,7 +169,7 @@ class LTIPlugin extends PluginBase {
             $token->generateToken();
 
             if (!$token->save()) {
-                die('Error creating token');
+                exit('Error creating token');
             }
 
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
@@ -184,9 +181,7 @@ class LTIPlugin extends PluginBase {
             $token = Token::model($surveyId)->findByAttributes($tokenQuery);
             //already completed.
             if ($token->completed != 'N') {
-                //display already completed and return to CANVAS
-                print '<p>Survey already completed</p>';
-                exit;
+                exit('Survey already completed');
             }
 
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
