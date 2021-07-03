@@ -106,7 +106,11 @@ class LTIPlugin extends PluginBase {
             return;
         $action = $oEvent->get('function');
 
-        if (!empty($action)) {
+        if (empty($action)) {
+            echo "No survey id passed";
+            return;
+        }
+
             $iSurveyId = intval($action);
 
             $surveyidExists = Survey::model()->findByPk($iSurveyId);
@@ -123,7 +127,11 @@ class LTIPlugin extends PluginBase {
             }
 
             //Check if the correct key is being sent
-            if ($params['oauth_consumer_key'] == $this->get('sAuthKey','Survey', $iSurveyId)){
+        if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $iSurveyId)){
+            echo "Wrong key passed";
+            exit;
+        }
+
                 $this->debug("Valid LTI Connection",$context->info,microtime(true));
 
                 if (!tableExists("{{tokens_$iSurveyId}}")) {
@@ -165,26 +173,22 @@ class LTIPlugin extends PluginBase {
                     $token = Token::create($iSurveyId);
                     $token->setAttributes(array_merge($token_query,$token_add));
                     $token->generateToken();
-                    if ($token->save()) {
-                        Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
-                    } else {
+
+            if (!$token->save()) {
                         die("Error creating token");
                     }
+
+            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
                 } else { //else if a token continue where left off
                     $token = Token::model($iSurveyId)->findByAttributes($token_query);
                     //already completed.
                     if ($token->completed != 'N') {
                         //display already completed and return to CANVAS
                         print "<p>Survey already completed</p>";
-                    } else {
-                        Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
-                    }
-                }
-            } else {
-                echo "Wrong key passed";
+                exit;
             }
-        } else {
-            echo "No survey id passed";
+
+            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
         }
     }
 
