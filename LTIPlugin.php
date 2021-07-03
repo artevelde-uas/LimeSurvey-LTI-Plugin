@@ -113,8 +113,7 @@ class LTIPlugin extends PluginBase {
 
         $surveyId = (int) $action;
 
-        $surveyidExists = Survey::model()->findByPk($surveyId);
-        if (!isset($surveyidExists)) {
+        if (Survey::model()->findByPk($surveyId) === null) {
             die("Survey $surveyId does not exist");
         }
 
