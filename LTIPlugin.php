@@ -292,7 +292,7 @@ class LTIPlugin extends PluginBase {
         foreach ($event->get('settings') as $name => $value)
         {
             /* In order use survey setting, if not set, use global, if not set use default */
-            $default=$event->get($name,null,null,$this->settings[$name]['default'] ?? NULL);
+            $default=$event->get($name,null,null,$this->settings[$name]['default'] ?? null);
             $this->set($name, $value, 'Survey', $event->get('survey'),$default);
         }
     }
