@@ -41,60 +41,60 @@ class LTIPlugin extends PluginBase {
         $this->subscribe('newUnsecureRequest','newDirectRequest'); //for LTI call
     }
 
-    protected $settings = array(
-        'sResourceIdAttribute' => array (
+    protected $settings = [
+        'sResourceIdAttribute' => [
             'type' => 'string',
             'default' => 'resource_link_id',
             'label' => 'REQUIRED: The LTI attributes that stores the unique Resource ID - this is how the LTI system identifies the resources that contains the LTI Consumer (eg the Unit)',
             'help' => 'For openEdX it is probably resource_link_id, for Canvas it is probably custom_canvas_course_id. This maps to ATTRIBUTE_3 in your participant table'
-        ),
-        'sUserIdAttribute' => array (
+        ],
+        'sUserIdAttribute' => [
             'type' => 'string',
             'default' => 'user_id',
             'label' => 'REQUIRED: The LTI attributes that stores the unique User ID',
             'help' => 'For openEdX it is probably user_id, for Canvas it is probably custom_canvas_user_id. This maps to ATTRIBUTE_4 in your participant table'
-        ),
-        'sUrlAttribute' => array (
+        ],
+        'sUrlAttribute' => [
             'type' => 'string',
             'default' => 'launch_presentation_return_url',
             'label' => 'Optional: The LTI attributes that stores the return URL',
             'help' => 'Leave blank for no data to be stored. For Canvas it appears to be launch_presentation_return_url. This maps to ATTRIBUTE_1 in your participant table'
-        ),
-        'sCourseTitleAttribute' => array (
+        ],
+        'sCourseTitleAttribute' => [
             'type' => 'string',
             'default' => 'context_title',
             'label' => 'Optional: The LTI attributes that stores the course title',
             'help' => 'Leave blank for no data to be stored. For openEdX and Canvas it appears to be context_title. This maps to ATTRIBUTE_2 in your participant table'
-        ),
-        'sEmailAttribute' => array (
+        ],
+        'sEmailAttribute' => [
             'type' => 'string',
             'default' => 'lis_person_contact_email_primary',
             'label' => 'Optional: The LTI attributes that stores the participants email address',
             'help' => 'Leave blank for no data to be stored. For openEdX and Canvas it appears to be lis_person_contact_email_primary. This maps to email in your participant table'
-        ),
-        'sFirstNameAttribute' => array (
+        ],
+        'sFirstNameAttribute' => [
             'type' => 'string',
             'default' => 'lis_person_name_given',
             'label' => 'Optional: The LTI attributes that stores the first name of the participant',
             'help' => 'Leave blank for no data to be stored. For openEdX and Canvas it appears to be lis_person_name_given. This maps to firstname in your participant table'
-        ),
-        'sLastNameAttribute' => array (
+        ],
+        'sLastNameAttribute' => [
             'type' => 'string',
             'default' => 'lis_person_name_family',
             'label' => 'Optional: The LTI attributes that stores the last name of the participant',
             'help' => 'Leave blank for no data to be stored. For openEdX and Canvas it appears to be lis_person_name_family. This maps to lastname in your participant table'
-        ),
-        'bDebugMode' => array (
+        ],
+        'bDebugMode' => [
             'type' => 'select',
-            'options' => array (
+            'options' => [
                 0 => 'No',
                 1 => 'Yes'
-            ),
+            ],
             'default' => 0,
             'label' => 'Enable Debug Mode',
             'help' => 'Enable debugmode to see what data is transmitted'
-        )
-    );
+        ]
+    ];
 
 
     /** Adapted from: https://github.com/SondagesPro/LS-extendRemoteControl/blob/master/extendRemoteControl.php
@@ -111,85 +111,98 @@ class LTIPlugin extends PluginBase {
             return;
         }
 
-            $iSurveyId = intval($action);
+        $iSurveyId = intval($action);
 
-            $surveyidExists = Survey::model()->findByPk($iSurveyId);
-            if (!isset($surveyidExists)) {
-                die("Survey $iSurveyId does not exist");
-            }
+        $surveyidExists = Survey::model()->findByPk($iSurveyId);
+        if (!isset($surveyidExists)) {
+            die("Survey $iSurveyId does not exist");
+        }
 
-            //Build the LTI object with the credentials as we know them
-            try {
-                $params = $this->handleRequest($this->get('sAuthSecret','Survey', $iSurveyId));
-            } catch (Exception $e) {
-                echo "Bad OAuth. " . $e->getMessage();
-                exit;
-            }
+        //Build the LTI object with the credentials as we know them
+        try {
+            $params = $this->handleRequest($this->get('sAuthSecret','Survey', $iSurveyId));
+        } catch (Exception $e) {
+            echo "Bad OAuth. " . $e->getMessage();
+            exit;
+        }
 
-            //Check if the correct key is being sent
+        //Check if the correct key is being sent
         if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $iSurveyId)){
             echo "Wrong key passed";
             exit;
         }
 
-                $this->debug("Valid LTI Connection",$context->info,microtime(true));
+        $this->debug("Valid LTI Connection",$context->info,microtime(true));
 
-                if (!tableExists("{{tokens_$iSurveyId}}")) {
-                    die("No participant table for survey $iSurveyId");
-                }
+        if (!tableExists("{{tokens_$iSurveyId}}")) {
+            die("No participant table for survey $iSurveyId");
+        }
 
-                //store the return url somewhere if it exists
-                $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
-                $url = "";
-                if (!empty($urlAttribute) && isset($params[$urlAttribute])) {
-                    $url = $params[$urlAttribute];
-                }
+        //store the return url somewhere if it exists
+        $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
+        $url = "";
+        if (!empty($urlAttribute) && isset($params[$urlAttribute])) {
+            $url = $params[$urlAttribute];
+        }
 
-                //If we want to limit completion to one per course/user combination:
-                $bMultipleCompletions = $this->get('bMultipleCompletions','Survey', $iSurveyId);
+        //If we want to limit completion to one per course/user combination:
+        $bMultipleCompletions = $this->get('bMultipleCompletions','Survey', $iSurveyId);
 
-                $token_count = 0;
+        $token_count = 0;
 
-                $token_query = array('attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
-                    'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]);
+        $token_query = [
+            'attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
+            'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]
+        ];
 
-                if ($bMultipleCompletions != 1) {
-                    //search for token based on attribute_3 and attribute_4 (resource id and user id)
-                    $token_count = Token::model($iSurveyId)->countByAttributes($token_query);
+        if ($bMultipleCompletions != 1) {
+            //search for token based on attribute_3 and attribute_4 (resource id and user id)
+            $token_count = Token::model($iSurveyId)->countByAttributes($token_query);
 
-                }
+        }
 
-                if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
-                    $firstname = isset($params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
-                    $lastname = isset($params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
-                    $email = isset($params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
+        if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
+            $firstname = isset($params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:"";
+            $lastname = isset($params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:"";
+            $email = isset($params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:"";
 
-                    $attribute_2 = isset($params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
-                    $token_add = array('attribute_1' => $url,
-                        'attribute_2' => $attribute_2,
-                        'firstname' => $firstname,
-                        'lastname' => $lastname,
-                        'email' => $email);
-                    $token = Token::create($iSurveyId);
-                    $token->setAttributes(array_merge($token_query,$token_add));
-                    $token->generateToken();
+            $attribute_2 = isset($params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:"";
+            $token_add = [
+                'attribute_1' => $url,
+                'attribute_2' => $attribute_2,
+                'firstname' => $firstname,
+                'lastname' => $lastname,
+                'email' => $email
+            ];
+            $token = Token::create($iSurveyId);
+            $token->setAttributes(array_merge($token_query,$token_add));
+            $token->generateToken();
 
             if (!$token->save()) {
-                        die("Error creating token");
-                    }
+                die("Error creating token");
+            }
 
-            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token, 'newtest' => 'Y')));
-                } else { //else if a token continue where left off
-                    $token = Token::model($iSurveyId)->findByAttributes($token_query);
-                    //already completed.
-                    if ($token->completed != 'N') {
-                        //display already completed and return to CANVAS
-                        print "<p>Survey already completed</p>";
+            $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
+                'sid' => $iSurveyId,
+                'token' => $token->token,
+                'newtest' => 'Y'
+            ]);
+        } else { //else if a token continue where left off
+            $token = Token::model($iSurveyId)->findByAttributes($token_query);
+            //already completed.
+            if ($token->completed != 'N') {
+                //display already completed and return to CANVAS
+                print "<p>Survey already completed</p>";
                 exit;
             }
 
-            Yii::app()->getController()->redirect(Yii::app()->createAbsoluteUrl('survey/index', array('sid' => $iSurveyId, 'token' => $token->token)));
+            $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
+                'sid' => $iSurveyId,
+                'token' => $token->token
+            ]);
         }
+
+        Yii::app()->getController()->redirect($redirectUrl);
     }
 
 
@@ -228,51 +241,51 @@ class LTIPlugin extends PluginBase {
         $kmessage = $message;
 
         if ($message == "") {
-            $message =  Yii::app()->createAbsoluteUrl('plugins/unsecure', array('plugin' => "LTIPlugin", 'function' => $oEvent->get('survey'),));
+            $message =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
+                'plugin' => "LTIPlugin",
+                'function' => $oEvent->get('survey')]);
             $kmessage = '"Advanced Module List" in "Advanced Settings" contains: ["lti_consumer"] and "LTI_Passports" contains: ["limesurvey:'.$apiKey.':'.$apiSecret.'"]';
         }
 
-        $aSets = array (
-            'sAuthKey' => array (
+        $aSets = [
+            'sAuthKey' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The key used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthKey', 'Survey', $oEvent->get('survey'),$this->get('sAuthKey',null,null,str_replace(array('~', '_', ':'), array('a', 'z', 'e'), Yii::app()->securityManager->generateRandomString(32)))),
-            ),
-            'sAuthSecret' => array (
+                'current' => $this->get('sAuthKey', 'Survey', $oEvent->get('survey'),$this->get('sAuthKey',null,null,str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+            ],
+            'sAuthSecret' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The secret used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthSecret', 'Survey', $oEvent->get('survey'),$this->get('sAuthSecret',null,null,str_replace(array('~', '_',':'), array('a', 'z', 'e'), Yii::app()->securityManager->generateRandomString(32)))),
-            ),
-            'bMultipleCompletions' => array (
+                'current' => $this->get('sAuthSecret', 'Survey', $oEvent->get('survey'),$this->get('sAuthSecret',null,null,str_replace(['~', '_',':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+            ],
+            'bMultipleCompletions' => [
                 'type' => 'select',
-                'options' => array (
+                'options' => [
                     0 => 'No',
                     1 => 'Yes'
-                ),
+                ],
                 'current' => $this->get('bMultipleCompletions', 'Survey', $oEvent->get('survey')),
                 'label' => 'Allow a user in a course to complete this survey more than once',
                 'help' => 'This will allow multiple tokens to be created for the same user each time they go to access the survey'
-            ),
-
-            'sInfo' => array (
+            ],
+            'sInfo' => [
                 'type' => 'info',
                 'label' => 'The URL to access this survey via the LTI Provider',
                 'help' =>  $message
-            ),
-            'sInfo2' => array (
+            ],
+            'sInfo2' => [
                 'type' => 'info',
                 'label' => 'If using OpenEdX ensure the following: ',
                 'help' =>  $kmessage
-            ),
+            ]
+        ];
 
-        );
-
-        $aSettings = array(
+        $aSettings = [
             'name' => get_class ( $this ),
-            'settings' => $aSets,
-        );
+            'settings' => $aSets
+        ];
         $oEvent->set("surveysettings.{$this->id}", $aSettings);
     }
 
