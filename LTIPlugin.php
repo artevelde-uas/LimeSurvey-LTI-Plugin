@@ -149,27 +149,27 @@ class LTIPlugin extends PluginBase {
         $bMultipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $iSurveyId);
 
         //search for token based on attribute_3 and attribute_4 (resource id and user id)
-        $token_query = [
+        $tokenQuery = [
             'attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
             'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]
         ];
 
-        $token_count = $bMultipleCompletions ? 0 : (int) Token::model($iSurveyId)->countByAttributes($token_query);
+        $tokenCount = $bMultipleCompletions ? 0 : (int) Token::model($iSurveyId)->countByAttributes($tokenQuery);
 
-        if ($bMultipleCompletions || $token_count === 0) { //if no token, then create a new one and start survey
+        if ($bMultipleCompletions || $tokenCount === 0) { //if no token, then create a new one and start survey
             $firstname = $params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])] ?? '';
             $lastname = $params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])] ?? '';
             $email = $params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])] ?? '';
-            $attribute_2 = $params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])] ?? '';
-            $token_add = [
+            $attribute2 = $params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])] ?? '';
+            $tokenAdd = [
                 'attribute_1' => $url,
-                'attribute_2' => $attribute_2,
+                'attribute_2' => $attribute2,
                 'firstname' => $firstname,
                 'lastname' => $lastname,
                 'email' => $email
             ];
             $token = Token::create($iSurveyId);
-            $token->setAttributes(array_merge($token_query,$token_add));
+            $token->setAttributes(array_merge($tokenQuery,$tokenAdd));
             $token->generateToken();
 
             if (!$token->save()) {
@@ -182,7 +182,7 @@ class LTIPlugin extends PluginBase {
                 'newtest' => 'Y'
             ]);
         } else { //else if a token continue where left off
-            $token = Token::model($iSurveyId)->findByAttributes($token_query);
+            $token = Token::model($iSurveyId)->findByAttributes($tokenQuery);
             //already completed.
             if ($token->completed != 'N') {
                 //display already completed and return to CANVAS
@@ -332,7 +332,7 @@ class LTIPlugin extends PluginBase {
     }
 
 
-    private function debug($parameters, $hookSent, $time_start)
+    private function debug($parameters, $hookSent, $timeStart)
     {
         if($this->get('bDebugMode',null,null,$this->settings['bDebugMode']))
         {
@@ -341,7 +341,7 @@ class LTIPlugin extends PluginBase {
             echo '<br><br> ----------------------------- <br><br>';
             var_dump($hookSent);
             echo '<br><br> ----------------------------- <br><br>';
-            echo 'Total execution time in seconds: ' . (microtime(true) - $time_start);
+            echo 'Total execution time in seconds: ' . (microtime(true) - $timeStart);
             echo '</pre>';
         }
     }
