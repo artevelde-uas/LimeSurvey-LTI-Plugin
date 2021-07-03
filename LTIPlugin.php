@@ -162,11 +162,10 @@ class LTIPlugin extends PluginBase {
         }
 
         if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
-            $firstname = isset($params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])])?$params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])]:'';
-            $lastname = isset($params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])])?$params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])]:'';
-            $email = isset($params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])])?$params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])]:'';
-
-            $attribute_2 = isset($params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])])?$params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])]:'';
+            $firstname = $params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])] ?? '';
+            $lastname = $params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])] ?? '';
+            $email = $params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])] ?? '';
+            $attribute_2 = $params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])] ?? '';
             $token_add = [
                 'attribute_1' => $url,
                 'attribute_2' => $attribute_2,
@@ -298,7 +297,7 @@ class LTIPlugin extends PluginBase {
         foreach ($event->get('settings') as $name => $value)
         {
             /* In order use survey setting, if not set, use global, if not set use default */
-            $default=$event->get($name,null,null,isset($this->settings[$name]['default'])?$this->settings[$name]['default']:NULL);
+            $default=$event->get($name,null,null,$this->settings[$name]['default'] ?? NULL);
             $this->set($name, $value, 'Survey', $event->get('survey'),$default);
         }
     }
