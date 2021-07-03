@@ -146,22 +146,17 @@ class LTIPlugin extends PluginBase {
         }
 
         //If we want to limit completion to one per course/user combination:
-        $bMultipleCompletions = $this->get('bMultipleCompletions','Survey', $iSurveyId);
+        $bMultipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $iSurveyId);
 
-        $token_count = 0;
-
+        //search for token based on attribute_3 and attribute_4 (resource id and user id)
         $token_query = [
             'attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
             'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]
         ];
 
-        if ($bMultipleCompletions != 1) {
-            //search for token based on attribute_3 and attribute_4 (resource id and user id)
-            $token_count = Token::model($iSurveyId)->countByAttributes($token_query);
+        $token_count = $bMultipleCompletions ? 0 : (int) Token::model($iSurveyId)->countByAttributes($token_query);
 
-        }
-
-        if ($bMultipleCompletions == 1 || $token_count == 0) { //if no token, then create a new one and start survey
+        if ($bMultipleCompletions || $token_count === 0) { //if no token, then create a new one and start survey
             $firstname = $params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])] ?? '';
             $lastname = $params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])] ?? '';
             $email = $params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])] ?? '';
@@ -339,7 +334,7 @@ class LTIPlugin extends PluginBase {
 
     private function debug($parameters, $hookSent, $time_start)
     {
-        if($this->get('bDebugMode',null,null,$this->settings['bDebugMode'])==1)
+        if($this->get('bDebugMode',null,null,$this->settings['bDebugMode']))
         {
             echo '<pre>';
             var_dump($parameters);
