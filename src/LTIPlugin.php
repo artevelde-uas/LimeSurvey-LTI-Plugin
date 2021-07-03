@@ -102,8 +102,11 @@ class LTIPlugin extends PluginBase
     public function newDirectRequest()
     {
         $event = $this->getEvent();
-        if ($event->get('target') != $this->getName())
+
+        if ($event->get('target') != $this->getName()) {
             return;
+        }
+
         $action = $event->get('function');
 
         if (empty($action)) {
