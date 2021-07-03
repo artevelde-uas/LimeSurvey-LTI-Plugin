@@ -136,10 +136,7 @@ class LTIPlugin extends PluginBase {
 
         //store the return url somewhere if it exists
         $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
-        $url = '';
-        if (!empty($urlAttribute) && isset($params[$urlAttribute])) {
-            $url = $params[$urlAttribute];
-        }
+        $url = (!empty($urlAttribute) && isset($params[$urlAttribute])) ? $params[$urlAttribute] : '';
 
         //If we want to limit completion to one per course/user combination:
         $multipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $surveyId);
