@@ -5,7 +5,7 @@ require 'vendor/autoload.php';
 use IMSGlobal\LTI\OAuth\OAuthServer;
 use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
 use IMSGlobal\LTI\OAuth\OAuthRequest;
-Use ArrayOAuthDataStore;
+use ArrayOAuthDataStore;
 
 
 /**
@@ -28,17 +28,19 @@ Use ArrayOAuthDataStore;
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-class LTIPlugin extends PluginBase {
+class LTIPlugin extends PluginBase
+{
 
     protected $storage = 'DbStorage';
     static protected $description = 'Make LimeSurvey an LTI provider';
     static protected $name = 'LTIPlugin';
 
-    public function init() {
+    public function init()
+    {
         $this->subscribe('beforeSurveySettings');
         $this->subscribe('newSurveySettings');
         $this->subscribe('newDirectRequest'); //for LTI call
-        $this->subscribe('newUnsecureRequest','newDirectRequest'); //for LTI call
+        $this->subscribe('newUnsecureRequest', 'newDirectRequest'); //for LTI call
     }
 
     protected $settings = [
@@ -118,42 +120,42 @@ class LTIPlugin extends PluginBase {
 
         //Build the LTI object with the credentials as we know them
         try {
-            $params = $this->handleRequest($this->get('sAuthSecret','Survey', $surveyId));
+            $params = $this->handleRequest($this->get('sAuthSecret', 'Survey', $surveyId));
         } catch (Exception $e) {
             exit("Bad OAuth: {$e->getMessage()}");
         }
 
         //Check if the correct key is being sent
-        if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $surveyId)){
+        if ($params['oauth_consumer_key'] != $this->get('sAuthKey', 'Survey', $surveyId)) {
             exit('Wrong key passed');
         }
 
-        $this->debug('Valid LTI Connection',$params,microtime(true));
+        $this->debug('Valid LTI Connection', $params, microtime(true));
 
         if (!tableExists("{{tokens_$surveyId}}")) {
             exit("No participant table for survey $surveyId");
         }
 
         //store the return url somewhere if it exists
-        $urlAttribute = $this->get('sUrlAttribute',null,null,$this->settings['sUrlAttribute']);
+        $urlAttribute = $this->get('sUrlAttribute', null, null, $this->settings['sUrlAttribute']);
         $url = (!empty($urlAttribute) && isset($params[$urlAttribute])) ? $params[$urlAttribute] : '';
 
         //If we want to limit completion to one per course/user combination:
-        $multipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $surveyId);
+        $multipleCompletions = (bool) $this->get('bMultipleCompletions', 'Survey', $surveyId);
 
         //search for token based on attribute_3 and attribute_4 (resource id and user id)
         $tokenQuery = [
-            'attribute_3' => $params[$this->get('sResourceIdAttribute',null,null,$this->settings['sResourceIdAttribute'])],
-            'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]
+            'attribute_3' => $params[$this->get('sResourceIdAttribute', null, null, $this->settings['sResourceIdAttribute'])],
+            'attribute_4' => $params[$this->get('sUserIdAttribute', null, null, $this->settings['sUserIdAttribute'])]
         ];
 
         $tokenCount = $multipleCompletions ? 0 : (int) Token::model($surveyId)->countByAttributes($tokenQuery);
 
         if ($multipleCompletions || $tokenCount === 0) { //if no token, then create a new one and start survey
-            $firstname = $params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])] ?? '';
-            $lastname = $params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])] ?? '';
-            $email = $params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])] ?? '';
-            $attribute2 = $params[$this->get('sCourseTitleAttribute',null,null,$this->settings['sCourseTitleAttribute'])] ?? '';
+            $firstname = $params[$this->get('sFirstNameAttribute', null, null, $this->settings['sFirstNameAttribute'])] ?? '';
+            $lastname = $params[$this->get('sLastNameAttribute', null, null, $this->settings['sLastNameAttribute'])] ?? '';
+            $email = $params[$this->get('sEmailAttribute', null, null, $this->settings['sEmailAttribute'])] ?? '';
+            $attribute2 = $params[$this->get('sCourseTitleAttribute', null, null, $this->settings['sCourseTitleAttribute'])] ?? '';
             $tokenAdd = [
                 'attribute_1' => $url,
                 'attribute_2' => $attribute2,
@@ -162,7 +164,7 @@ class LTIPlugin extends PluginBase {
                 'email' => $email
             ];
             $token = Token::create($surveyId);
-            $token->setAttributes(array_merge($tokenQuery,$tokenAdd));
+            $token->setAttributes(array_merge($tokenQuery, $tokenAdd));
             $token->generateToken();
 
             if (!$token->save()) {
@@ -209,16 +211,16 @@ class LTIPlugin extends PluginBase {
         if (!(isset($survey->tokenAttributes['attribute_1']) &&
             isset($survey->tokenAttributes['attribute_2']) &&
             isset($survey->tokenAttributes['attribute_3']) &&
-            isset($survey->tokenAttributes['attribute_4'])) ) {
+            isset($survey->tokenAttributes['attribute_4']))) {
             $info = 'Please ensure the survey participant function has been enabled, and that there at least 4 attributes created';
         }
 
-        $apiKey = $this->get ( 'sAuthKey', 'Survey', $event->get ( 'survey' ) );
+        $apiKey = $this->get('sAuthKey', 'Survey', $event->get('survey'));
         if (empty($apiKey) || trim($apiKey) == '') {
             $info = 'Set an Auth key and save these settings before you can access the LTI URL';
         }
 
-        $apiSecret = $this->get ( 'sAuthSecret', 'Survey', $event->get ( 'survey' ) );
+        $apiSecret = $this->get('sAuthSecret', 'Survey', $event->get('survey'));
         if (empty($apiKey) || trim($apiSecret) == '') {
             $info = 'Set an Auth secret and save these settings before you can access the LTI URL';
         }
@@ -228,7 +230,8 @@ class LTIPlugin extends PluginBase {
         if ($info == '') {
             $info =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
                 'plugin' => 'LTIPlugin',
-                'function' => $event->get('survey')]);
+                'function' => $event->get('survey')
+            ]);
             $info2 = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
         }
 
@@ -237,13 +240,13 @@ class LTIPlugin extends PluginBase {
                 'type' => 'string',
                 'label' => 'REQUIRED: The key used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthKey', 'Survey', $event->get('survey'),$this->get('sAuthKey',null,null,str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthKey', 'Survey', $event->get('survey'), $this->get('sAuthKey', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
             ],
             'sAuthSecret' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The secret used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthSecret', 'Survey', $event->get('survey'),$this->get('sAuthSecret',null,null,str_replace(['~', '_',':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthSecret', 'Survey', $event->get('survey'), $this->get('sAuthSecret', null, null, str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
             ],
             'bMultipleCompletions' => [
                 'type' => 'select',
@@ -268,7 +271,7 @@ class LTIPlugin extends PluginBase {
         ];
 
         $settings = [
-            'name' => get_class ( $this ),
+            'name' => get_class($this),
             'settings' => $sets
         ];
         $event->set("surveysettings.{$this->id}", $settings);
@@ -280,27 +283,26 @@ class LTIPlugin extends PluginBase {
     public function newSurveySettings()
     {
         $event = $this->event;
-        foreach ($event->get('settings') as $name => $value)
-        {
+        foreach ($event->get('settings') as $name => $value) {
             /* In order use survey setting, if not set, use global, if not set use default */
-            $default=$event->get($name,null,null,$this->settings[$name]['default'] ?? null);
-            $this->set($name, $value, 'Survey', $event->get('survey'),$default);
+            $default = $event->get($name, null, null, $this->settings[$name]['default'] ?? null);
+            $this->set($name, $value, 'Survey', $event->get('survey'), $default);
         }
     }
 
     private function handleRequest($secret)
     {
         // If this request is not an LTI Launch, give up
-        if ( ( $_REQUEST['lti_message_type'] != 'basic-lti-launch-request' ) || ( $_REQUEST['lti_version'] !== 'LTI-1p0' ) ) {
+        if (($_REQUEST['lti_message_type'] != 'basic-lti-launch-request') || ($_REQUEST['lti_version'] !== 'LTI-1p0')) {
             throw new Exception('Not a valid LTI launch request');
         }
 
-        if ( !isset($_REQUEST['resource_link_id']) ) {
+        if (!isset($_REQUEST['resource_link_id'])) {
             throw new Exception('No resource link id provided');
         }
 
         // Insure we have a valid launch
-        if ( empty($_REQUEST['oauth_consumer_key']) ) {
+        if (empty($_REQUEST['oauth_consumer_key'])) {
             throw new Exception('Missing oauth_consumer_key in request');
         }
 
@@ -318,15 +320,14 @@ class LTIPlugin extends PluginBase {
 
         // Strip OAuth papameters (except consumer key)
         return array_filter($_POST, function ($value, $key) {
-            return ( ( strpos($key, 'oauth_') === false ) || ( $key === 'oauth_consumer_key' ) );
+            return ((strpos($key, 'oauth_') === false) || ($key === 'oauth_consumer_key'));
         }, ARRAY_FILTER_USE_BOTH);
     }
 
 
     private function debug($parameters, $hookSent, $timeStart)
     {
-        if($this->get('bDebugMode',null,null,$this->settings['bDebugMode']))
-        {
+        if ($this->get('bDebugMode', null, null, $this->settings['bDebugMode'])) {
             echo '<pre>';
             var_dump($parameters);
             echo '<br><br> ----------------------------- <br><br>';
@@ -336,5 +337,4 @@ class LTIPlugin extends PluginBase {
             echo '</pre>';
         }
     }
-
 }
