@@ -101,41 +101,41 @@ class LTIPlugin extends PluginBase {
      */
     public function newDirectRequest()
     {
-        $oEvent = $this->getEvent();
-        if ($oEvent->get('target') != $this->getName())
+        $event = $this->getEvent();
+        if ($event->get('target') != $this->getName())
             return;
-        $action = $oEvent->get('function');
+        $action = $event->get('function');
 
         if (empty($action)) {
             echo 'No survey id passed';
             return;
         }
 
-        $iSurveyId = intval($action);
+        $surveyId = intval($action);
 
-        $surveyidExists = Survey::model()->findByPk($iSurveyId);
+        $surveyidExists = Survey::model()->findByPk($surveyId);
         if (!isset($surveyidExists)) {
-            die("Survey $iSurveyId does not exist");
+            die("Survey $surveyId does not exist");
         }
 
         //Build the LTI object with the credentials as we know them
         try {
-            $params = $this->handleRequest($this->get('sAuthSecret','Survey', $iSurveyId));
+            $params = $this->handleRequest($this->get('sAuthSecret','Survey', $surveyId));
         } catch (Exception $e) {
             echo 'Bad OAuth. ' . $e->getMessage();
             exit;
         }
 
         //Check if the correct key is being sent
-        if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $iSurveyId)){
+        if ($params['oauth_consumer_key'] != $this->get('sAuthKey','Survey', $surveyId)){
             echo 'Wrong key passed';
             exit;
         }
 
         $this->debug('Valid LTI Connection',$context->info,microtime(true));
 
-        if (!tableExists("{{tokens_$iSurveyId}}")) {
-            die("No participant table for survey $iSurveyId");
+        if (!tableExists("{{tokens_$surveyId}}")) {
+            die("No participant table for survey $surveyId");
         }
 
         //store the return url somewhere if it exists
@@ -146,7 +146,7 @@ class LTIPlugin extends PluginBase {
         }
 
         //If we want to limit completion to one per course/user combination:
-        $bMultipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $iSurveyId);
+        $multipleCompletions = (bool) $this->get('bMultipleCompletions','Survey', $surveyId);
 
         //search for token based on attribute_3 and attribute_4 (resource id and user id)
         $tokenQuery = [
@@ -154,9 +154,9 @@ class LTIPlugin extends PluginBase {
             'attribute_4' => $params[$this->get('sUserIdAttribute',null,null,$this->settings['sUserIdAttribute'])]
         ];
 
-        $tokenCount = $bMultipleCompletions ? 0 : (int) Token::model($iSurveyId)->countByAttributes($tokenQuery);
+        $tokenCount = $multipleCompletions ? 0 : (int) Token::model($surveyId)->countByAttributes($tokenQuery);
 
-        if ($bMultipleCompletions || $tokenCount === 0) { //if no token, then create a new one and start survey
+        if ($multipleCompletions || $tokenCount === 0) { //if no token, then create a new one and start survey
             $firstname = $params[$this->get('sFirstNameAttribute',null,null,$this->settings['sFirstNameAttribute'])] ?? '';
             $lastname = $params[$this->get('sLastNameAttribute',null,null,$this->settings['sLastNameAttribute'])] ?? '';
             $email = $params[$this->get('sEmailAttribute',null,null,$this->settings['sEmailAttribute'])] ?? '';
@@ -168,7 +168,7 @@ class LTIPlugin extends PluginBase {
                 'lastname' => $lastname,
                 'email' => $email
             ];
-            $token = Token::create($iSurveyId);
+            $token = Token::create($surveyId);
             $token->setAttributes(array_merge($tokenQuery,$tokenAdd));
             $token->generateToken();
 
@@ -177,12 +177,12 @@ class LTIPlugin extends PluginBase {
             }
 
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
-                'sid' => $iSurveyId,
+                'sid' => $surveyId,
                 'token' => $token->token,
                 'newtest' => 'Y'
             ]);
         } else { //else if a token continue where left off
-            $token = Token::model($iSurveyId)->findByAttributes($tokenQuery);
+            $token = Token::model($surveyId)->findByAttributes($tokenQuery);
             //already completed.
             if ($token->completed != 'N') {
                 //display already completed and return to CANVAS
@@ -191,7 +191,7 @@ class LTIPlugin extends PluginBase {
             }
 
             $redirectUrl = Yii::app()->createAbsoluteUrl('survey/index', [
-                'sid' => $iSurveyId,
+                'sid' => $surveyId,
                 'token' => $token->token
             ]);
         }
@@ -205,9 +205,9 @@ class LTIPlugin extends PluginBase {
      */
     public function beforeSurveySettings()
     {
-        $oEvent = $this->event;
+        $event = $this->event;
 
-        $survey = Survey::model()->findByPk($oEvent->get('survey'));
+        $survey = Survey::model()->findByPk($event->get('survey'));
 
         $message = '';
 
@@ -222,12 +222,12 @@ class LTIPlugin extends PluginBase {
             $message = 'Please ensure the survey participant function has been enabled, and that there at least 4 attributes created';
         }
 
-        $apiKey = $this->get ( 'sAuthKey', 'Survey', $oEvent->get ( 'survey' ) );
+        $apiKey = $this->get ( 'sAuthKey', 'Survey', $event->get ( 'survey' ) );
         if (empty($apiKey) || trim($apiKey) == '') {
             $message = 'Set an Auth key and save these settings before you can access the LTI URL';
         }
 
-        $apiSecret = $this->get ( 'sAuthSecret', 'Survey', $oEvent->get ( 'survey' ) );
+        $apiSecret = $this->get ( 'sAuthSecret', 'Survey', $event->get ( 'survey' ) );
         if (empty($apiKey) || trim($apiSecret) == '') {
             $message = 'Set an Auth secret and save these settings before you can access the LTI URL';
         }
@@ -237,22 +237,22 @@ class LTIPlugin extends PluginBase {
         if ($message == '') {
             $message =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
                 'plugin' => 'LTIPlugin',
-                'function' => $oEvent->get('survey')]);
+                'function' => $event->get('survey')]);
             $kmessage = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
         }
 
-        $aSets = [
+        $sets = [
             'sAuthKey' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The key used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthKey', 'Survey', $oEvent->get('survey'),$this->get('sAuthKey',null,null,str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthKey', 'Survey', $event->get('survey'),$this->get('sAuthKey',null,null,str_replace(['~', '_', ':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
             ],
             'sAuthSecret' => [
                 'type' => 'string',
                 'label' => 'REQUIRED: The secret used as a password in your LTI system',
                 'help' => 'Please use something random',
-                'current' => $this->get('sAuthSecret', 'Survey', $oEvent->get('survey'),$this->get('sAuthSecret',null,null,str_replace(['~', '_',':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
+                'current' => $this->get('sAuthSecret', 'Survey', $event->get('survey'),$this->get('sAuthSecret',null,null,str_replace(['~', '_',':'], ['a', 'z', 'e'], Yii::app()->securityManager->generateRandomString(32)))),
             ],
             'bMultipleCompletions' => [
                 'type' => 'select',
@@ -260,7 +260,7 @@ class LTIPlugin extends PluginBase {
                     0 => 'No',
                     1 => 'Yes'
                 ],
-                'current' => $this->get('bMultipleCompletions', 'Survey', $oEvent->get('survey')),
+                'current' => $this->get('bMultipleCompletions', 'Survey', $event->get('survey')),
                 'label' => 'Allow a user in a course to complete this survey more than once',
                 'help' => 'This will allow multiple tokens to be created for the same user each time they go to access the survey'
             ],
@@ -276,11 +276,11 @@ class LTIPlugin extends PluginBase {
             ]
         ];
 
-        $aSettings = [
+        $settings = [
             'name' => get_class ( $this ),
-            'settings' => $aSets
+            'settings' => $sets
         ];
-        $oEvent->set("surveysettings.{$this->id}", $aSettings);
+        $event->set("surveysettings.{$this->id}", $settings);
     }
 
     /**
