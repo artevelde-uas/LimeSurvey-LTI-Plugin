@@ -200,36 +200,36 @@ class LTIPlugin extends PluginBase {
 
         $survey = Survey::model()->findByPk($event->get('survey'));
 
-        $message = '';
+        $info = '';
 
         if (!tableExists($survey->responsesTableName)) {
-            $message = 'Please activate the survey before continuing';
+            $info = 'Please activate the survey before continuing';
         }
 
         if (!(isset($survey->tokenAttributes['attribute_1']) &&
             isset($survey->tokenAttributes['attribute_2']) &&
             isset($survey->tokenAttributes['attribute_3']) &&
             isset($survey->tokenAttributes['attribute_4'])) ) {
-            $message = 'Please ensure the survey participant function has been enabled, and that there at least 4 attributes created';
+            $info = 'Please ensure the survey participant function has been enabled, and that there at least 4 attributes created';
         }
 
         $apiKey = $this->get ( 'sAuthKey', 'Survey', $event->get ( 'survey' ) );
         if (empty($apiKey) || trim($apiKey) == '') {
-            $message = 'Set an Auth key and save these settings before you can access the LTI URL';
+            $info = 'Set an Auth key and save these settings before you can access the LTI URL';
         }
 
         $apiSecret = $this->get ( 'sAuthSecret', 'Survey', $event->get ( 'survey' ) );
         if (empty($apiKey) || trim($apiSecret) == '') {
-            $message = 'Set an Auth secret and save these settings before you can access the LTI URL';
+            $info = 'Set an Auth secret and save these settings before you can access the LTI URL';
         }
 
-        $kmessage = $message;
+        $info2 = $info;
 
-        if ($message == '') {
-            $message =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
+        if ($info == '') {
+            $info =  Yii::app()->createAbsoluteUrl('plugins/unsecure', [
                 'plugin' => 'LTIPlugin',
                 'function' => $event->get('survey')]);
-            $kmessage = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
+            $info2 = "'Advanced Module List' in 'Advanced Settings' contains: ['lti_consumer'] and 'LTI_Passports' contains: ['limesurvey:$apiKey:$apiSecret']";
         }
 
         $sets = [
@@ -258,12 +258,12 @@ class LTIPlugin extends PluginBase {
             'sInfo' => [
                 'type' => 'info',
                 'label' => 'The URL to access this survey via the LTI Provider',
-                'help' =>  $message
+                'help' =>  $info
             ],
             'sInfo2' => [
                 'type' => 'info',
                 'label' => 'If using OpenEdX ensure the following: ',
-                'help' =>  $kmessage
+                'help' =>  $info2
             ]
         ];
 
