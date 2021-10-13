@@ -1,19 +1,12 @@
 <?php
-
-use IMSGlobal\LTI\OAuth\OAuthServer;
-use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
-use IMSGlobal\LTI\OAuth\OAuthRequest;
-use ArrayOAuthDataStore;
-
-
 /**
  * Make LimeSurvey an LTI provider
  * Plugin based on "zesthook" by Evently-nl
  *
+ * @author Adam Zammit <adam@acspri.org.au>
+ * @copyright 2018,2020,2021 ACSPRI <https://www.acspri.org.au>
  * @author Renaat De Muynck <renaat.demuynck@arteveldehs.be>
  * @copyright 2021 Artevelde UAS <https://www.artevelde-uas.be>
- * @author Adam Zammit <adam@acspri.org.au>
- * @copyright 2018,2020 ACSPRI <https://www.acspri.org.au>
  * @author Stefan Verweij <stefan@evently.nl>
  * @copyright 2016 Evently <https://www.evently.nl>
  * @license GPL v3
@@ -28,10 +21,18 @@ use ArrayOAuthDataStore;
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+require_once  __DIR__ . '/LTI-Tool-Provider-Library-PHP/vendor/autoload.php';
+require_once  __DIR__ . '/ArrayOAuthDataStore.php';
+
+use IMSGlobal\LTI\OAuth\OAuthServer;
+use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
+use IMSGlobal\LTI\OAuth\OAuthRequest;
+
 class LTIPlugin extends PluginBase
 {
     protected $storage = 'DbStorage';
-    static protected $name = 'LTI Plugin';
+    static protected $name = 'LTIPlugin';
     static protected $description = 'LimeSurvey Plugin that allows LimeSurvey to act as an LTI provider';
 
     public function init()
@@ -325,7 +326,7 @@ class LTIPlugin extends PluginBase
         $request = OAuthRequest::from_request();
         $server->verify_request($request);
 
-        // Strip OAuth papameters (except consumer key)
+        // Strip OAuth parameters (except consumer key)
         return array_filter($_POST, function ($value, $key) {
             return ((strpos($key, 'oauth_') === false) || ($key === 'oauth_consumer_key'));
         }, ARRAY_FILTER_USE_BOTH);

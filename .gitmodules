@@ -1,0 +1,3 @@
+[submodule "LTI-Tool-Provider-Library-PHP"]
+	path = LTI-Tool-Provider-Library-PHP
+	url = git@github.com:adamzammit/LTI-Tool-Provider-Library-PHP.git
