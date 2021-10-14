@@ -28,8 +28,9 @@ git clone --recursive https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 9. A random key and password should be generated - save the settings then a URL to access should be displayed (otherwise a message will be displayed notifying of the requirements for the LTI plugin as above)
 10. Use the URL listed and the key and secret generated to set up your LMS to use LimeSUrvey as an LTI Provider (see below for examples)
 11. By default a course participant will be able to complete the survey only once, and will return to the previous point of completion when visiting the survey again if not completed. If you want them to be able to complete multiple times for the same unit - please set "Allow a user in a course to complete this survey more than once" to "Yes"
-12. If you want to return a grade/score backto the LMS - enter a text or expression in the return result box. You can just put the number 1 if you want 100% returned on completion, otherwise you can use any valid LimeSurvey expression to send a calculated value (this could be used to send back a score on an exam for example). The value should always be a floating point number between 0.0 and 1.0
+12. If you want to return a grade/score back to the LMS - enter a text or expression in the return result box. You can just put the number 1 if you want 100% returned on completion, otherwise you can use any valid LimeSurvey expression to send a calculated value (this could be used to send back a score on an exam for example). The value should always be a floating point number between 0.0 and 1.0
 
+Note: See the included file "example-survey-return-assessment-value.lss" to see how you can return the result of an assessment using the plugin
 
 ### Configuration and usage (Canvas)
 
