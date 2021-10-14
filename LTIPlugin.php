@@ -28,6 +28,65 @@ require_once  __DIR__ . '/ArrayOAuthDataStore.php';
 use IMSGlobal\LTI\OAuth\OAuthServer;
 use IMSGlobal\LTI\OAuth\OAuthSignatureMethod_HMAC_SHA1;
 use IMSGlobal\LTI\OAuth\OAuthRequest;
+use IMSGlobal\LTI\ToolProvider;
+
+class LTIResourceLink extends ToolProvider\ResourceLink
+{
+    public function setConsumer($consumer)
+    {
+        $this->consumer = $consumer;
+    }
+}
+
+class LTIConsumer
+{
+    public $secret;
+    private $key;
+    public function getKey()
+    {
+        return $this->key;
+    }
+    public function __construct($key,$secret)
+    {
+        $this->secret = $secret;
+        $this->key = $key;
+    }
+}
+
+
+class LTIResource
+{
+    public $outcomeServiceURL;
+    public function getSetting($setting)
+    {
+        if ($setting == "lis_outcome_service_url") {
+            return $this->outcomeServiceURL;
+        }
+        return false;
+    }
+    public function __construct($outcomeserviceurl)
+    {
+        $this->outcomeServiceURL = $outcomeserviceurl;
+    }
+}
+
+
+class LTIUser
+{
+    public $ltiResultSourcedId;
+    private $resourceLink;
+
+    public function getResourceLink()
+    {
+        return $this->resourceLink;
+    }
+
+    public function __construct($outcomeserviceurl,$sourceid) {
+        $this->ltiResultSourcedId = $sourceid;
+        $this->resourceLink = new LTIResource($outcomeserviceurl);
+    }
+}
+
 
 class LTIPlugin extends PluginBase
 {
@@ -41,6 +100,7 @@ class LTIPlugin extends PluginBase
         $this->subscribe('newSurveySettings');
         $this->subscribe('newDirectRequest'); //for LTI call
         $this->subscribe('newUnsecureRequest', 'newDirectRequest'); //for LTI call
+        $this->subscribe('afterSurveyComplete'); //for LTI result return
     }
 
     protected $settings = [
@@ -85,6 +145,18 @@ class LTIPlugin extends PluginBase
             'default' => 'lis_person_name_family',
             'label' => 'Optional: The LTI attributes that stores the last name of the participant',
             'help' => 'Leave blank for no data to be stored. For openEdX and Canvas it appears to be lis_person_name_family. This maps to lastname in your participant table'
+        ],
+        'sResultSourceAttribute' => [
+            'type' => 'string',
+            'default' => 'lis_result_sourcedid',
+            'label' => 'Optional: The LTI attributes that stores the result sourcedid - this is required when you want to return a result to the LMS. The default appears to be lis_result_sourcedid',
+            'help' => 'Leave blank for no data to be stored. This maps to ATTRIBUTE_5'
+        ],
+        'sOutcomeServiceURLAttribute' => [
+            'type' => 'string',
+            'default' => 'lis_outcome_service_url',
+            'label' => 'Optional: The LTI attributes that stores the outcome service URL - this is required when you want to return a result to the LMS',
+            'help' => 'Leave blank for no data to be stored. This maps to ATTRIBUTE_6. The default appears to be lis_outcome_service_url'
         ],
         'bDebugMode' => [
             'type' => 'select',
@@ -150,7 +222,6 @@ class LTIPlugin extends PluginBase
 
         // Get the current token count
         $tokenCount = $multipleCompletions ? 0 : (int) Token::model($surveyId)->countByAttributes($tokenQuery);
-
         // If no token, then create a new one and start survey
         if ($multipleCompletions || $tokenCount === 0) {
             $firstname = $params[$this->get('sFirstNameAttribute', null, null, $this->settings['sFirstNameAttribute'])] ?? '';
@@ -164,8 +235,15 @@ class LTIPlugin extends PluginBase
                 'lastname' => $lastname,
                 'email' => $email
             ];
+            $tokenReturn = [];
+            if (!empty($this->get('sReturnExpression', 'Survey', $surveyId))) {
+                $tokenReturn = [
+                'attribute_5' => $params[$this->get('sResultSourceAttribute', null, null, $this->settings['sResultSourceAttribute'])] ?? '',
+                'attribute_6' => $params[$this->get('sOutcomeServiceURLAttribute', null, null, $this->settings['sOutcomeServiceURLAttribute'])] ?? ''
+                ];
+            }
             $token = Token::create($surveyId);
-            $token->setAttributes(array_merge($tokenQuery, $tokenAdd));
+            $token->setAttributes(array_merge($tokenQuery, $tokenAdd, $tokenReturn));
             $token->generateToken();
 
             if (!$token->save()) {
@@ -200,6 +278,39 @@ class LTIPlugin extends PluginBase
     }
 
     /**
+     * If result return is enabled - send a result back
+     */
+    public function afterSurveyComplete()
+    {
+        $event = $this->event;
+        $surveyId = $event->get('surveyId');
+
+        $rr = $this->get('sReturnExpression', 'Survey', $surveyId);
+
+        if (!empty($rr)) { //return the assessment value
+            $survey = Survey::model()->findByPk($surveyId);
+            if (isset($survey->tokenAttributes['attribute_5']) &&
+                isset($survey->tokenAttributes['attribute_6'])) {
+
+                $responseId = $event->get('responseId');
+                $response = $this->api->getResponse($surveyId, $responseId);
+                $token = Token::model($surveyId)->findByToken($response['token']);
+                $pr = LimeExpressionManager::ProcessString($rr, null, array(), 3, 1, false, false, true);
+                if (!empty($token->attribute_5) && !empty($token->attribute_6)) {
+                    //send result back
+                    $lti_outcome = new ToolProvider\Outcome($pr);
+                    $resource_link = new LTIResourceLink();
+                    $consumer = new LTIConsumer($this->get('sAuthKey', 'Survey', $surveyId),$this->get('sAuthSecret', 'Survey', $surveyId));
+                    $resource_link->setConsumer($consumer);
+                    $user = new LTIUser($token->attribute_6,$token->attribute_5);
+                    $res = $resource_link->doOutcomesService(ToolProvider\ResourceLink::EXT_WRITE, $lti_outcome, $user);
+                }
+            }
+        }
+    }
+
+
+    /**
      * Add setting on survey level: provide URL for LTI connector and check that tokens table / attributes exist
      */
     public function beforeSurveySettings()
@@ -214,11 +325,17 @@ class LTIPlugin extends PluginBase
             $info = 'Please activate the survey before continuing';
         }
 
+        $rr = $this->get('sReturnExpression', 'Survey', $event->get('survey'));
+
         if (!(isset($survey->tokenAttributes['attribute_1']) &&
             isset($survey->tokenAttributes['attribute_2']) &&
             isset($survey->tokenAttributes['attribute_3']) &&
-            isset($survey->tokenAttributes['attribute_4']))) {
-            $info = 'Please ensure the survey participant function has been enabled, and that there at least 4 attributes created';
+            isset($survey->tokenAttributes['attribute_4']))
+            || ((!empty($rr)) &&
+            !(isset($survey->tokenAttributes['attribute_5']) &&
+              isset($survey->tokenAttributes['attribute_6'])))
+        ) {
+            $info = 'Please ensure the survey participant function has been enabled, and that there at least ' . (empty($rr) ? "4" : "6") .  ' attributes created';
         }
 
         $apiKey = $this->get('sAuthKey', 'Survey', $event->get('survey'));
@@ -266,6 +383,12 @@ class LTIPlugin extends PluginBase
                 'current' => $this->get('bMultipleCompletions', 'Survey', $event->get('survey')),
                 'label' => 'Allow a user in a course to complete this survey more than once',
                 'help' => 'This will allow multiple tokens to be created for the same user each time they go to access the survey'
+            ],
+            'sReturnExpression' => [
+                'type' => 'string',
+                'label' => 'If returning a result, please enter the text or expression you wish to return here. Leave blank to not return a result. LMS systems typically accept a value between 0 and 1',
+                'help' => 'For example, {A1} will return whatever was stored in question A1, 1 will just return the score of 1',
+                'current' => $this->get('sReturnExpression', 'Survey', $event->get('survey')),
             ],
             'sInfo' => [
                 'type' => 'info',
