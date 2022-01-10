@@ -158,6 +158,18 @@ class LTIPlugin extends PluginBase
             'label' => 'Optional: The LTI attributes that stores the outcome service URL - this is required when you want to return a result to the LMS',
             'help' => 'Leave blank for no data to be stored. This maps to ATTRIBUTE_6. The default appears to be lis_outcome_service_url'
         ],
+        'sCategoryIdAttribute' => [
+            'type' => 'string',
+            'default' => 'custom_canvas_account_id',
+            'label' => 'Optional: The LTI attributes that stores the ID of the course category',
+            'help' => 'For Canvas it is probably custom_canvas_user_id or canvas_account_sis_source_id. This maps to ATTRIBUTE_7 in your participant table'
+        ],
+        'sCategoryNameAttribute' => [
+            'type' => 'string',
+            'default' => 'custom_canvas_account_name',
+            'label' => 'Optional: The LTI attributes that stores the name of the course category',
+            'help' => 'For Canvas it is probably custom_canvas_account_name. This maps to ATTRIBUTE_8 in your participant table'
+        ],
         'bDebugMode' => [
             'type' => 'select',
             'options' => [
@@ -228,9 +240,13 @@ class LTIPlugin extends PluginBase
             $lastname = $params[$this->get('sLastNameAttribute', null, null, $this->settings['sLastNameAttribute'])] ?? '';
             $email = $params[$this->get('sEmailAttribute', null, null, $this->settings['sEmailAttribute'])] ?? '';
             $attribute2 = $params[$this->get('sCourseTitleAttribute', null, null, $this->settings['sCourseTitleAttribute'])] ?? '';
+            $attribute7 = $params[$this->get('sCategoryIdAttribute', null, null, $this->settings['sCategoryIdAttribute'])] ?? '';
+            $attribute8 = $params[$this->get('sCategoryNameAttribute', null, null, $this->settings['sCategoryNameAttribute'])] ?? '';
             $tokenAdd = [
                 'attribute_1' => $url,
                 'attribute_2' => $attribute2,
+                'attribute_7' => $attribute7,
+                'attribute_8' => $attribute8,
                 'firstname' => $firstname,
                 'lastname' => $lastname,
                 'email' => $email
@@ -330,12 +346,14 @@ class LTIPlugin extends PluginBase
         if (!(isset($survey->tokenAttributes['attribute_1']) &&
             isset($survey->tokenAttributes['attribute_2']) &&
             isset($survey->tokenAttributes['attribute_3']) &&
-            isset($survey->tokenAttributes['attribute_4']))
+            isset($survey->tokenAttributes['attribute_4']) &&
+            isset($survey->tokenAttributes['attribute_7']) &&
+            isset($survey->tokenAttributes['attribute_8']))
             || ((!empty($rr)) &&
             !(isset($survey->tokenAttributes['attribute_5']) &&
               isset($survey->tokenAttributes['attribute_6'])))
         ) {
-            $info = 'Please ensure the survey participant function has been enabled, and that there at least ' . (empty($rr) ? "4" : "6") .  ' attributes created';
+            $info = 'Please ensure the survey participant function has been enabled, and that there at least ' . (empty($rr) ? "6" : "8") .  ' attributes created';
         }
 
         $apiKey = $this->get('sAuthKey', 'Survey', $event->get('survey'));
