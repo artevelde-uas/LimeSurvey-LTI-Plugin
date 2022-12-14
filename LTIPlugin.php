@@ -304,6 +304,8 @@ class LTIPlugin extends PluginBase
                     $resource_link->setConsumer($consumer);
                     $user = new LTIUser($token->attribute_6,$token->attribute_5);
                     $res = $resource_link->doOutcomesService(ToolProvider\ResourceLink::EXT_WRITE, $lti_outcome, $user);
+                    $token->attribute_7 = print_r($res,TRUE);
+                    $token->save();
                 }
             }
         }
@@ -333,9 +335,10 @@ class LTIPlugin extends PluginBase
             isset($survey->tokenAttributes['attribute_4']))
             || ((!empty($rr)) &&
             !(isset($survey->tokenAttributes['attribute_5']) &&
-              isset($survey->tokenAttributes['attribute_6'])))
+              isset($survey->tokenAttributes['attribute_6']) &&
+              isset($survey->tokenAttributes['attribute_7'])))
         ) {
-            $info = 'Please ensure the survey participant function has been enabled, and that there at least ' . (empty($rr) ? "4" : "6") .  ' attributes created';
+            $info = 'Please ensure the survey participant function has been enabled, and that there at least ' . (empty($rr) ? "4" : "7") .  ' attributes created';
         }
 
         $apiKey = $this->get('sAuthKey', 'Survey', $event->get('survey'));

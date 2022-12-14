@@ -12,8 +12,22 @@ git clone --recursive https://github.com/adamzammit/LTIPlugin.git LTIPlugin
 ## Requirements
 
 - LimeSurvey version 3.x, 4.x, 5.x
-- Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable, 6 attributes if you want to return a grade/result (the plugin will use the first 4 or 6 attributes for LTI related data)
+- Surveys need to be activated, with a participant table set up with at least 4 attributes avaiable, 7 attributes if you want to return a grade/result (the plugin will use the first 4 or 7 attributes for LTI related data)
 - If your LTI Provider is running on HTTPS, then LimeSurvey must run over HTTPS also
+
+## LimeSurvey Particpant Attributes
+
+Required:
+- attribute_1: LTI return URL
+- attribute_2: LMS Course Title
+- attribute_3: LMS Resource ID (course ID)
+- attribute_4: LMS User ID
+
+Optional (if using LimeSurvey to return a grade/result)
+- attribute_5: LMS result source did
+- attribute_6: LMS outcome source URL
+- attribute_7: Storing the result of the attempt to set a grade in the LMS
+ 
 
 ## Configuration (LimeSurvey)
 
